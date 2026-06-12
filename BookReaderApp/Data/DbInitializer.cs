@@ -34,6 +34,39 @@ public static class DbInitializer
         var userPassword = config["Seed:UserPassword"] ?? DefaultUserPassword;
 
         await SeedAsync(userManager, roleManager, adminPassword, userPassword);
+        await SeedBooksAsync(db, userManager);
+    }
+
+    // Seeds a sample book and places it on the test user's shelf so "My Books" has
+    // something to show out of the box. Idempotent: only acts when the catalog is empty.
+    private static async Task SeedBooksAsync(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> userManager)
+    {
+        if (await db.Books.AnyAsync())
+        {
+            return;
+        }
+
+        var book = new Book
+        {
+            Title = "The Pragmatic Programmer",
+            Author = "Andrew Hunt, David Thomas",
+            Isbn = "978-0135957059",
+            Genre = "Software",
+            Description = "A classic guide to the craft of software development.",
+            CoverImageUrl = "https://covers.openlibrary.org/b/isbn/9780135957059-L.jpg"
+        };
+        db.Books.Add(book);
+        await db.SaveChangesAsync();
+
+        var testUser = await userManager.FindByEmailAsync(TestUserEmail);
+        if (testUser is not null &&
+            !await db.UserBooks.AnyAsync(ub => ub.UserId == testUser.Id && ub.BookId == book.Id))
+        {
+            db.UserBooks.Add(new UserBook { UserId = testUser.Id, BookId = book.Id });
+            await db.SaveChangesAsync();
+        }
     }
 
     // Idempotent: safe to run on every startup. Returns nothing; throws if a

@@ -9,4 +9,7 @@ public class ApplicationUser : IdentityUser
     public string DisplayName { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // The user's personal bookshelf entries.
+    public ICollection<UserBook> UserBooks { get; set; } = new List<UserBook>();
 }

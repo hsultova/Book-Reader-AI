@@ -1,0 +1,19 @@
+@model BookReaderApp.Models.ViewModels.BookFormViewModel
+@{
+    ViewData["Title"] = "Add book";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Add book</h1>
+        <form asp-action="Create" method="post">
+            <partial name="_BookForm" model="Model" />
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

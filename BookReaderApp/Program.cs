@@ -1,5 +1,6 @@
 using BookReaderApp.Data;
 using BookReaderApp.Models;
+using BookReaderApp.Repositories;
 using BookReaderApp.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -44,8 +45,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
-// Business-logic layer. Scoped to match the Identity managers it depends on.
+// Data-access layer. Open-generic registration gives every entity a CRUD repository.
+builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+builder.Services.AddScoped<IUserBookRepository, UserBookRepository>();
+
+// Business-logic layer. Scoped to match the Identity managers / DbContext it depends on.
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IUserBookService, UserBookService>();
 
 // Antiforgery (CSRF) on every unsafe verb without annotating each action.
 builder.Services.AddControllersWithViews(options =>
