@@ -44,6 +44,11 @@ ScaffoldingReadMe.txt
 *~
 CodeCoverage/
 
+# SQLite local database (regenerate with: dotnet ef database update)
+*.db
+*.db-shm
+*.db-wal
+
 # MSBuild Binary and Structured Log
 *.binlog
 
