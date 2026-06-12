@@ -1,5 +1,6 @@
 using BookReaderApp.Data;
 using BookReaderApp.Models;
+using BookReaderApp.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
+
+// Business-logic layer. Scoped to match the Identity managers it depends on.
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 // Antiforgery (CSRF) on every unsafe verb without annotating each action.
 builder.Services.AddControllersWithViews(options =>

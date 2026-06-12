@@ -1,25 +1,17 @@
-using BookReaderApp.Models;
 using BookReaderApp.Models.ViewModels;
+using BookReaderApp.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookReaderApp.Controllers;
 
 public class AccountController : Controller
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly ILogger<AccountController> _logger;
+    private readonly IAccountService _accountService;
 
-    public AccountController(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        ILogger<AccountController> logger)
+    public AccountController(IAccountService accountService)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _logger = logger;
+        _accountService = accountService;
     }
 
     [HttpGet]
@@ -40,25 +32,15 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = new ApplicationUser
-        {
-            UserName = model.Email,
-            Email = model.Email,
-            DisplayName = model.DisplayName
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
+        var result = await _accountService.RegisterAsync(model);
         if (result.Succeeded)
         {
-            await _userManager.AddToRoleAsync(user, AppRoles.User);
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            _logger.LogInformation("New account registered for {Email}.", model.Email);
             return RedirectToLocal(returnUrl);
         }
 
         foreach (var error in result.Errors)
         {
-            ModelState.AddModelError(string.Empty, error.Description);
+            ModelState.AddModelError(string.Empty, error);
         }
 
         return View(model);
@@ -82,33 +64,28 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var result = await _signInManager.PasswordSignInAsync(
-            model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
-
-        if (result.Succeeded)
+        var outcome = await _accountService.LoginAsync(model);
+        switch (outcome)
         {
-            _logger.LogInformation("User {Email} signed in.", model.Email);
-            return RedirectToLocal(returnUrl);
-        }
+            case LoginOutcome.Success:
+                return RedirectToLocal(returnUrl);
 
-        if (result.IsLockedOut)
-        {
-            _logger.LogWarning("Account {Email} locked out.", model.Email);
-            ModelState.AddModelError(string.Empty, "This account is temporarily locked. Please try again later.");
-            return View(model);
-        }
+            case LoginOutcome.LockedOut:
+                ModelState.AddModelError(string.Empty, "This account is temporarily locked. Please try again later.");
+                return View(model);
 
-        // Generic message to avoid revealing whether the account exists.
-        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-        return View(model);
+            default:
+                // Generic message to avoid revealing whether the account exists.
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
+        }
     }
 
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
-        _logger.LogInformation("User signed out.");
+        await _accountService.LogoutAsync();
         return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 
