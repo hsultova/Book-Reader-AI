@@ -1,7 +1,7 @@
 @model BookReaderApp.Models.ViewModels.BookFormViewModel
 @{
     ViewData["Title"] = "Edit book";
-    var id = (int)ViewContext.RouteData.Values["id"]!;
+    var id = (int)ViewData["BookId"]!;
 }
 
 <div class="row justify-content-center">

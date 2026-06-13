@@ -71,6 +71,7 @@ public class BooksController : Controller
             return NotFound();
         }
 
+        ViewData["BookId"] = id;
         return View(ToViewModel(book));
     }
 
@@ -80,6 +81,7 @@ public class BooksController : Controller
     {
         if (!ModelState.IsValid)
         {
+            ViewData["BookId"] = id;
             return View(model);
         }
 
