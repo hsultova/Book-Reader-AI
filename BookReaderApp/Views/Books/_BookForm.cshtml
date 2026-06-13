@@ -25,9 +25,11 @@
     <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
 </div>
 <div class="mb-3">
-    <label asp-for="Genre" class="form-label"></label>
-    <input asp-for="Genre" class="form-control" />
-    <span asp-validation-for="Genre" class="text-danger"></span>
+    <label asp-for="GenreValue" class="form-label">Genre</label>
+    <select asp-for="GenreValue" asp-items="ViewBag.Genres" class="form-select" id="GenreValue">
+        <option value=""></option>
+    </select>
+    <span asp-validation-for="GenreValue" class="text-danger"></span>
 </div>
 <div class="mb-3">
     <label asp-for="Description" class="form-label"></label>

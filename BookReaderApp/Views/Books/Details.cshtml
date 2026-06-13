@@ -22,10 +22,10 @@
         <dl class="row">
             <dt class="col-sm-3">ISBN</dt>
             <dd class="col-sm-9">@Model.Isbn</dd>
-            @if (!string.IsNullOrEmpty(Model.Genre))
+            @if (!string.IsNullOrEmpty(Model.Genre?.Name))
             {
                 <dt class="col-sm-3">Genre</dt>
-                <dd class="col-sm-9">@Model.Genre</dd>
+                <dd class="col-sm-9">@Model.Genre.Name</dd>
             }
         </dl>
         @if (!string.IsNullOrEmpty(Model.Description))

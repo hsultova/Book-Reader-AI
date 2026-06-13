@@ -16,7 +16,7 @@ public class BookServiceTests
             .Options);
 
     private static BookService NewService(ApplicationDbContext context) =>
-        new(new EfRepository<Book>(context), new AuthorRepository(context), NullLogger<BookService>.Instance);
+        new(new EfRepository<Book>(context), new AuthorRepository(context), new GenreRepository(context), NullLogger<BookService>.Instance);
 
     private static async Task<int> SeedAuthorAsync(ApplicationDbContext context)
     {
@@ -31,7 +31,7 @@ public class BookServiceTests
         Title = "Clean Code",
         AuthorValue = authorId.ToString(),
         Isbn = "978-0132350884",
-        Genre = "Software",
+        GenreValue = "Software",
         Description = "A handbook of agile software craftsmanship.",
         CoverImageUrl = "https://example.com/clean-code.jpg"
     };
@@ -73,13 +73,15 @@ public class BookServiceTests
 
         var edit = SampleForm(authorId);
         edit.Title = "Clean Code (Revised)";
-        edit.Genre = "Programming";
+        edit.GenreValue = "Programming";
+        edit.Genre = new Genre { Name = "Software" };
         var result = await service.UpdateBookAsync(created.BookId!.Value, edit);
 
         Assert.True(result.Succeeded);
-        var stored = await context.Books.SingleAsync();
+        var stored = await context.Books.Include(b => b.Genre).SingleAsync();
         Assert.Equal("Clean Code (Revised)", stored.Title);
-        Assert.Equal("Programming", stored.Genre);
+        Assert.Equal("Software", stored.Genre!.Name);
+        Assert.Equal("Programming", stored.Genre!.Name);
     }
 
     [Fact]

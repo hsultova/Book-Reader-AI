@@ -1,12 +1,37 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\Projects\\AI for developers - course\\project\\Book-Reader-AI\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{5DA400E0-55EA-570E-FA02-630069EC70E8}|BookReaderApp\\BookReaderApp.csproj|d:\\projects\\ai for developers - course\\project\\book-reader-ai\\bookreaderapp\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DA400E0-55EA-570E-FA02-630069EC70E8}|BookReaderApp\\BookReaderApp.csproj|solutionrelative:bookreaderapp\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "D:\\Projects\\AI for developers - course\\project\\Book-Reader-AI\\BookReaderApp\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "BookReaderApp\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "D:\\Projects\\AI for developers - course\\project\\Book-Reader-AI\\BookReaderApp\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "BookReaderApp\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAApwCMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T19:14:03.348Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

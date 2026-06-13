@@ -37,6 +37,6 @@ public class BookFormViewModel : IValidatableObject
     [DataType(DataType.MultilineText)]
     public string? Description { get; set; }
 
-    [StringLength(60)]
-    public string? Genre { get; set; }
+    [Display(Name = "Genre")]
+    public string? GenreValue { get; set; }
 }

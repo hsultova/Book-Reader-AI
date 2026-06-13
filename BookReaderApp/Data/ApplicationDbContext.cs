@@ -13,6 +13,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Author> Authors => Set<Author>();
 
+    public DbSet<Genre> Genres => Set<Genre>();
+
     public DbSet<Book> Books => Set<Book>();
 
     public DbSet<UserBook> UserBooks => Set<UserBook>();
@@ -25,10 +27,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Book>(entity =>
         {
             entity.HasOne(b => b.Author)
-                .WithMany(a => a.Books)
+				.WithMany(a => a.Books)
                 .HasForeignKey(b => b.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        builder.Entity<Genre>();
 
         builder.Entity<UserBook>(entity =>
         {

@@ -31,9 +31,9 @@ else
                     <div class="card-body d-flex flex-column">
                         <h2 class="h5 card-title">@book.Title</h2>
                         <p class="card-text text-muted mb-1">@book.Author?.Name</p>
-                        @if (!string.IsNullOrEmpty(book.Genre))
+                        @if (!string.IsNullOrEmpty(book.Genre?.Name))
                         {
-                            <span class="badge bg-secondary align-self-start mb-2">@book.Genre</span>
+                            <span class="badge bg-secondary align-self-start mb-2">@book.Genre.Name</span>
                         }
                         <div class="mt-auto">
                             <a asp-action="Details" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary">Details</a>

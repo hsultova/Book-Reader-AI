@@ -13,11 +13,16 @@ public class BooksController : Controller
 {
     private readonly IBookService _bookService;
     private readonly IAuthorService _authorService;
+    private readonly IGenreService _genreService;
 
-    public BooksController(IBookService bookService, IAuthorService authorService)
+    public BooksController(
+        IBookService bookService,
+        IAuthorService authorService,
+        IGenreService genreService)
     {
         _bookService = bookService;
         _authorService = authorService;
+        _genreService = genreService;
     }
 
     [HttpGet]
@@ -45,7 +50,7 @@ public class BooksController : Controller
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Moderator}")]
     public async Task<IActionResult> Create()
     {
-        await PopulateAuthorsAsync();
+        await PopulateLookupsAsync();
         return View(new BookFormViewModel());
     }
 
@@ -55,7 +60,7 @@ public class BooksController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await PopulateAuthorsAsync();
+            await PopulateLookupsAsync();
             return View(model);
         }
 
@@ -66,7 +71,7 @@ public class BooksController : Controller
         }
 
         AddErrors(result.Errors);
-        await PopulateAuthorsAsync();
+        await PopulateLookupsAsync();
         return View(model);
     }
 
@@ -81,7 +86,7 @@ public class BooksController : Controller
         }
 
         ViewData["BookId"] = id;
-        await PopulateAuthorsAsync();
+        await PopulateLookupsAsync();
         return View(ToViewModel(book));
     }
 
@@ -92,7 +97,7 @@ public class BooksController : Controller
         if (!ModelState.IsValid)
         {
             ViewData["BookId"] = id;
-            await PopulateAuthorsAsync();
+            await PopulateLookupsAsync();
             return View(model);
         }
 
@@ -103,7 +108,7 @@ public class BooksController : Controller
         }
 
         AddErrors(result.Errors);
-        await PopulateAuthorsAsync();
+        await PopulateLookupsAsync();
         return View(model);
     }
 
@@ -136,10 +141,13 @@ public class BooksController : Controller
         }
     }
 
-    private async Task PopulateAuthorsAsync()
+    private async Task PopulateLookupsAsync()
     {
         var authors = await _authorService.GetAllAuthorsAsync();
         ViewBag.Authors = new SelectList(authors, "Id", "Name");
+
+        var genres = await _genreService.GetAllGenresAsync();
+        ViewBag.Genres = new SelectList(genres, "Id", "Name");
     }
 
     private static BookFormViewModel ToViewModel(Book book) => new()
@@ -149,6 +157,6 @@ public class BooksController : Controller
         Isbn = book.Isbn,
         CoverImageUrl = book.CoverImageUrl,
         Description = book.Description,
-        Genre = book.Genre
+        GenreValue = book.GenreId?.ToString()
     };
 }

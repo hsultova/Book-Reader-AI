@@ -11,7 +11,10 @@ public class BookRepository : EfRepository<Book>
     }
 
     public override async Task<Book?> GetByIdAsync(int id) =>
-        await Set.Include(b => b.Author).FirstOrDefaultAsync(b => b.Id == id);
+        await Set
+            .Include(b => b.Author)
+            .Include(b => b.Genre)
+            .FirstOrDefaultAsync(b => b.Id == id);
 
     public override async Task<PagedResult<Book>> GetPagedAsync(
         int page, int pageSize = PagedResult<Book>.DefaultPageSize)
@@ -22,6 +25,7 @@ public class BookRepository : EfRepository<Book>
         var totalCount = await Set.CountAsync();
         var items = await Set
             .Include(b => b.Author)
+            .Include(b => b.Genre)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

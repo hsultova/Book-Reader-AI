@@ -14,7 +14,7 @@ public class Book
 
     public int AuthorId { get; set; }
 
-    public Author Author { get; set; }
+    public Author? Author { get; set; }
 
     [Required]
     [StringLength(20)]
@@ -29,8 +29,9 @@ public class Book
     [StringLength(2000)]
     public string? Description { get; set; }
 
-    [StringLength(60)]
-    public string? Genre { get; set; }
+    public int? GenreId { get; set; }
+
+    public Genre? Genre { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
