@@ -3,6 +3,7 @@ using BookReaderApp.Models.ViewModels;
 using BookReaderApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BookReaderApp.Controllers;
 
@@ -11,10 +12,12 @@ namespace BookReaderApp.Controllers;
 public class BooksController : Controller
 {
     private readonly IBookService _bookService;
+    private readonly IAuthorService _authorService;
 
-    public BooksController(IBookService bookService)
+    public BooksController(IBookService bookService, IAuthorService authorService)
     {
         _bookService = bookService;
+        _authorService = authorService;
     }
 
     [HttpGet]
@@ -40,7 +43,11 @@ public class BooksController : Controller
 
     [HttpGet]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Moderator}")]
-    public IActionResult Create() => View(new BookFormViewModel());
+    public async Task<IActionResult> Create()
+    {
+        await PopulateAuthorsAsync();
+        return View(new BookFormViewModel());
+    }
 
     [HttpPost]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Moderator}")]
@@ -48,6 +55,7 @@ public class BooksController : Controller
     {
         if (!ModelState.IsValid)
         {
+            await PopulateAuthorsAsync();
             return View(model);
         }
 
@@ -58,6 +66,7 @@ public class BooksController : Controller
         }
 
         AddErrors(result.Errors);
+        await PopulateAuthorsAsync();
         return View(model);
     }
 
@@ -72,6 +81,7 @@ public class BooksController : Controller
         }
 
         ViewData["BookId"] = id;
+        await PopulateAuthorsAsync();
         return View(ToViewModel(book));
     }
 
@@ -82,6 +92,7 @@ public class BooksController : Controller
         if (!ModelState.IsValid)
         {
             ViewData["BookId"] = id;
+            await PopulateAuthorsAsync();
             return View(model);
         }
 
@@ -92,6 +103,7 @@ public class BooksController : Controller
         }
 
         AddErrors(result.Errors);
+        await PopulateAuthorsAsync();
         return View(model);
     }
 
@@ -124,10 +136,16 @@ public class BooksController : Controller
         }
     }
 
+    private async Task PopulateAuthorsAsync()
+    {
+        var authors = await _authorService.GetAllAuthorsAsync();
+        ViewBag.Authors = new SelectList(authors, "Id", "Name");
+    }
+
     private static BookFormViewModel ToViewModel(Book book) => new()
     {
         Title = book.Title,
-        Author = book.Author,
+        AuthorValue = book.AuthorId.ToString(),
         Isbn = book.Isbn,
         CoverImageUrl = book.CoverImageUrl,
         Description = book.Description,

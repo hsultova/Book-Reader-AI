@@ -4,15 +4,24 @@ namespace BookReaderApp.Models.ViewModels;
 
 // Binds the Create/Edit book forms. Kept separate from the Book entity so view
 // concerns and validation messaging don't leak into the domain model.
-public class BookFormViewModel
+public class BookFormViewModel : IValidatableObject
 {
     [Required]
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(120)]
-    public string Author { get; set; } = string.Empty;
+    [Display(Name = "Author")]
+    public string? AuthorValue { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(AuthorValue))
+        {
+            yield return new ValidationResult(
+                "Author is required.",
+                [nameof(AuthorValue)]);
+        }
+    }
 
     [Required]
     [StringLength(20)]

@@ -8,9 +8,11 @@
     <span asp-validation-for="Title" class="text-danger"></span>
 </div>
 <div class="mb-3">
-    <label asp-for="Author" class="form-label"></label>
-    <input asp-for="Author" class="form-control" />
-    <span asp-validation-for="Author" class="text-danger"></span>
+    <label asp-for="AuthorValue" class="form-label">Author</label>
+    <select asp-for="AuthorValue" asp-items="ViewBag.Authors" class="form-select" id="AuthorValue">
+        <option value=""></option>
+    </select>
+    <span asp-validation-for="AuthorValue" class="text-danger"></span>
 </div>
 <div class="mb-3">
     <label asp-for="Isbn" class="form-label"></label>

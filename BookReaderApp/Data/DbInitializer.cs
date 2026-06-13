@@ -48,12 +48,18 @@ public static class DbInitializer
             return;
         }
 
+        var author = new Author
+        {
+            Name = "Andrew Hunt, David Thomas"
+        };
+        db.Authors.Add(author);
+        await db.SaveChangesAsync();
+
         var book = new Book
         {
             Title = "The Pragmatic Programmer",
-            Author = "Andrew Hunt, David Thomas",
+            AuthorId = author.Id,
             Isbn = "978-0135957059",
-            Genre = "Software",
             Description = "A classic guide to the craft of software development.",
             CoverImageUrl = "https://covers.openlibrary.org/b/isbn/9780135957059-L.jpg"
         };

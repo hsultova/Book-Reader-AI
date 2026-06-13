@@ -11,6 +11,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<Author> Authors => Set<Author>();
+
     public DbSet<Book> Books => Set<Book>();
 
     public DbSet<UserBook> UserBooks => Set<UserBook>();
@@ -19,6 +21,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         // Required first: lets Identity configure its own schema before we add ours.
         base.OnModelCreating(builder);
+
+        builder.Entity<Book>(entity =>
+        {
+            entity.HasOne(b => b.Author)
+                .WithMany(a => a.Books)
+                .HasForeignKey(b => b.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         builder.Entity<UserBook>(entity =>
         {

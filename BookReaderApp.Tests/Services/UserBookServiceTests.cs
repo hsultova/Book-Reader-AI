@@ -17,8 +17,12 @@ public class UserBookServiceTests
     public async Task GetMyBooksAsync_ReturnsOnlyUsersBooks_WithBookIncluded()
     {
         using var context = NewContext();
-        var mine = new Book { Title = "Mine", Author = "A", Isbn = "1" };
-        var other = new Book { Title = "Other", Author = "B", Isbn = "2" };
+        var authorA = new Author { Name = "A" };
+        var authorB = new Author { Name = "B" };
+        context.Authors.AddRange(authorA, authorB);
+        await context.SaveChangesAsync();
+        var mine = new Book { Title = "Mine", AuthorId = authorA.Id, Isbn = "1" };
+        var other = new Book { Title = "Other", AuthorId = authorB.Id, Isbn = "2" };
         context.Books.AddRange(mine, other);
         context.UserBooks.AddRange(
             new UserBook { UserId = "user-1", Book = mine },

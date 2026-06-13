@@ -16,12 +16,20 @@ public class BookServiceTests
             .Options);
 
     private static BookService NewService(ApplicationDbContext context) =>
-        new(new EfRepository<Book>(context), NullLogger<BookService>.Instance);
+        new(new EfRepository<Book>(context), new AuthorRepository(context), NullLogger<BookService>.Instance);
 
-    private static BookFormViewModel SampleForm() => new()
+    private static async Task<int> SeedAuthorAsync(ApplicationDbContext context)
+    {
+        var author = new Author { Name = "Robert C. Martin" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        return author.Id;
+    }
+
+    private static BookFormViewModel SampleForm(int authorId) => new()
     {
         Title = "Clean Code",
-        Author = "Robert C. Martin",
+        AuthorValue = authorId.ToString(),
         Isbn = "978-0132350884",
         Genre = "Software",
         Description = "A handbook of agile software craftsmanship.",
@@ -33,14 +41,15 @@ public class BookServiceTests
     {
         using var context = NewContext();
         var service = NewService(context);
+        var authorId = await SeedAuthorAsync(context);
 
-        var result = await service.CreateBookAsync(SampleForm());
+        var result = await service.CreateBookAsync(SampleForm(authorId));
 
         Assert.True(result.Succeeded);
         Assert.NotNull(result.BookId);
         var stored = await context.Books.SingleAsync();
         Assert.Equal("Clean Code", stored.Title);
-        Assert.Equal("Robert C. Martin", stored.Author);
+        Assert.Equal(authorId, stored.AuthorId); // existing author resolved by ID string
     }
 
     [Fact]
@@ -59,9 +68,10 @@ public class BookServiceTests
     {
         using var context = NewContext();
         var service = NewService(context);
-        var created = await service.CreateBookAsync(SampleForm());
+        var authorId = await SeedAuthorAsync(context);
+        var created = await service.CreateBookAsync(SampleForm(authorId));
 
-        var edit = SampleForm();
+        var edit = SampleForm(authorId);
         edit.Title = "Clean Code (Revised)";
         edit.Genre = "Programming";
         var result = await service.UpdateBookAsync(created.BookId!.Value, edit);
@@ -77,8 +87,9 @@ public class BookServiceTests
     {
         using var context = NewContext();
         var service = NewService(context);
+        var authorId = await SeedAuthorAsync(context);
 
-        var result = await service.UpdateBookAsync(999, SampleForm());
+        var result = await service.UpdateBookAsync(999, SampleForm(authorId));
 
         Assert.False(result.Succeeded);
         Assert.NotEmpty(result.Errors);
@@ -89,7 +100,8 @@ public class BookServiceTests
     {
         using var context = NewContext();
         var service = NewService(context);
-        var created = await service.CreateBookAsync(SampleForm());
+        var authorId = await SeedAuthorAsync(context);
+        var created = await service.CreateBookAsync(SampleForm(authorId));
 
         var deleted = await service.DeleteBookAsync(created.BookId!.Value);
 
@@ -113,9 +125,10 @@ public class BookServiceTests
     {
         using var context = NewContext();
         var service = NewService(context);
+        var authorId = await SeedAuthorAsync(context);
         for (var i = 0; i < 25; i++)
         {
-            var form = SampleForm();
+            var form = SampleForm(authorId);
             form.Title = $"Book {i}";
             await service.CreateBookAsync(form);
         }

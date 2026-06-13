@@ -15,6 +15,20 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css" />
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        new TomSelect('#AuthorValue', {
+            create: true,
+            createOnBlur: true,
+            persist: false,
+            placeholder: 'Select or type an author name...',
+            maxOptions: null
+        });
+    </script>
 }

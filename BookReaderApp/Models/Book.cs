@@ -12,9 +12,9 @@ public class Book
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(120)]
-    public string Author { get; set; } = string.Empty;
+    public int AuthorId { get; set; }
+
+    public Author Author { get; set; }
 
     [Required]
     [StringLength(20)]

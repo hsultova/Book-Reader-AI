@@ -23,7 +23,7 @@ else
                     }
                     <div class="card-body d-flex flex-column">
                         <h2 class="h5 card-title">@book.Title</h2>
-                        <p class="card-text text-muted mb-1">@book.Author</p>
+                        <p class="card-text text-muted mb-1">@book.Author?.Name</p>
                         <small class="text-muted mb-2">Added @entry.AddedAt.ToString("d MMM yyyy")</small>
                         <a asp-controller="Books" asp-action="Details" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary mt-auto align-self-start">Details</a>
                     </div>

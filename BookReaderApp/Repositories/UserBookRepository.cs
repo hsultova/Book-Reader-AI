@@ -13,6 +13,7 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
     public async Task<IReadOnlyList<UserBook>> GetForUserAsync(string userId) =>
         await Set
             .Include(ub => ub.Book)
+                .ThenInclude(b => b!.Author)
             .Where(ub => ub.UserId == userId)
             .OrderByDescending(ub => ub.AddedAt)
             .ToListAsync();

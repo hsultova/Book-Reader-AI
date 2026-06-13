@@ -9,11 +9,13 @@ namespace BookReaderApp.Services;
 public class BookService : IBookService
 {
     private readonly IRepository<Book> _books;
+    private readonly IAuthorRepository _authors;
     private readonly ILogger<BookService> _logger;
 
-    public BookService(IRepository<Book> books, ILogger<BookService> logger)
+    public BookService(IRepository<Book> books, IAuthorRepository authors, ILogger<BookService> logger)
     {
         _books = books;
+        _authors = authors;
         _logger = logger;
     }
 
@@ -25,8 +27,9 @@ public class BookService : IBookService
 
     public async Task<BookSaveResult> CreateBookAsync(BookFormViewModel model)
     {
+        var authorId = await ResolveAuthorAsync(model);
         var book = new Book();
-        Apply(model, book);
+        Apply(model, book, authorId);
 
         await _books.AddAsync(book);
         await _books.SaveChangesAsync();
@@ -43,7 +46,8 @@ public class BookService : IBookService
             return BookSaveResult.NotFound();
         }
 
-        Apply(model, book);
+        var authorId = await ResolveAuthorAsync(model);
+        Apply(model, book, authorId);
         _books.Update(book);
         await _books.SaveChangesAsync();
 
@@ -66,10 +70,21 @@ public class BookService : IBookService
         return true;
     }
 
-    private static void Apply(BookFormViewModel model, Book book)
+    private async Task<int> ResolveAuthorAsync(BookFormViewModel model)
+    {
+        if (int.TryParse(model.AuthorValue, out var existingId) && existingId > 0)
+            return existingId;
+
+        var author = new Author { Name = model.AuthorValue!.Trim() };
+        await _authors.AddAsync(author);
+        await _authors.SaveChangesAsync();
+        return author.Id;
+    }
+
+    private static void Apply(BookFormViewModel model, Book book, int authorId)
     {
         book.Title = model.Title;
-        book.Author = model.Author;
+        book.AuthorId = authorId;
         book.Isbn = model.Isbn;
         book.CoverImageUrl = model.CoverImageUrl;
         book.Description = model.Description;
