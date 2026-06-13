@@ -6,6 +6,20 @@
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <h1 class="h3 mb-3">Add book</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h6 card-title">Fetch from Google Books</h2>
+                <p class="text-muted small mb-2">Search by title, author, or ISBN, then pick a result to prefill the form.</p>
+                <div class="input-group">
+                    <input type="text" id="gb-query" class="form-control" placeholder="e.g. Clean Code" autocomplete="off" />
+                    <button type="button" id="gb-search" class="btn btn-outline-primary">Search</button>
+                </div>
+                <div id="gb-status" class="form-text"></div>
+                <div id="gb-results" class="list-group mt-2"></div>
+            </div>
+        </div>
+
         <form asp-action="Create" method="post">
             <partial name="_BookForm" model="Model" />
             <button type="submit" class="btn btn-primary">Create</button>
@@ -22,19 +36,79 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
     <script>
-        new TomSelect('#AuthorValue', {
+        const authorSelect = new TomSelect('#AuthorValue', {
             create: true,
             createOnBlur: true,
             persist: false,
             placeholder: 'Select or type an author name...',
             maxOptions: null
         });
-        new TomSelect('#GenreValue', {
+        const genreSelect = new TomSelect('#GenreValue', {
             create: true,
             createOnBlur: true,
             persist: false,
             placeholder: 'Select or type a genre...',
             maxOptions: null
+        });
+
+        // Select an existing option matching the name (avoids duplicates), otherwise create it.
+        function applyChoice(tomSelect, name) {
+            if (!name) return;
+            const match = Object.values(tomSelect.options)
+                .find(o => (o.text || '').trim().toLowerCase() === name.trim().toLowerCase());
+            if (match) {
+                tomSelect.addItem(match.value);
+            } else {
+                tomSelect.addOption({ value: name, text: name });
+                tomSelect.addItem(name);
+            }
+        }
+
+        function prefill(book) {
+            document.getElementById('Title').value = book.title || '';
+            document.getElementById('Isbn').value = book.isbn || '';
+            document.getElementById('CoverImageUrl').value = book.coverImageUrl || '';
+            document.getElementById('Description').value = book.description || '';
+            applyChoice(authorSelect, book.author);
+            applyChoice(genreSelect, book.genre);
+            window.scrollTo({ top: document.querySelector('form').offsetTop, behavior: 'smooth' });
+        }
+
+        const resultsEl = document.getElementById('gb-results');
+        const statusEl = document.getElementById('gb-status');
+        const queryEl = document.getElementById('gb-query');
+
+        async function search() {
+            const q = queryEl.value.trim();
+            resultsEl.innerHTML = '';
+            if (!q) { statusEl.textContent = 'Enter a search term.'; return; }
+
+            statusEl.textContent = 'Searching…';
+            try {
+                const res = await fetch('@Url.Action("SearchGoogleBooks", "Books")?query=' + encodeURIComponent(q));
+                if (!res.ok) { statusEl.textContent = 'Search failed. Please try again.'; return; }
+
+                const books = await res.json();
+                if (!books.length) { statusEl.textContent = 'No results found.'; return; }
+
+                statusEl.textContent = books.length + ' result(s) — click one to prefill the form.';
+                books.forEach(book => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action';
+                    const author = book.author ? ' — ' + book.author : '';
+                    item.textContent = book.title + author;
+                    item.addEventListener('click', () => prefill(book));
+                    resultsEl.appendChild(item);
+                });
+            } catch {
+                statusEl.textContent = 'Search failed. Please try again.';
+            }
+        }
+
+        document.getElementById('gb-search').addEventListener('click', search);
+        queryEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); search(); }
         });
     </script>
 }

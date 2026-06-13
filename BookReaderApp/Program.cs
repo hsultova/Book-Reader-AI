@@ -1,3 +1,4 @@
+using BookReaderApp.Configuration;
 using BookReaderApp.Data;
 using BookReaderApp.Models;
 using BookReaderApp.Repositories;
@@ -7,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Untracked overlay holding secrets (e.g. the Google Books API key)
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -58,6 +62,12 @@ builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IUserBookService, UserBookService>();
+
+// Google Books integration. Options bind the (backend-only) API key; the typed HttpClient
+// is the only path to Google — the key is attached server-side and never reaches the browser.
+builder.Services.Configure<GoogleBooksOptions>(
+    builder.Configuration.GetSection(GoogleBooksOptions.SectionName));
+builder.Services.AddHttpClient<IGoogleBooksService, GoogleBooksService>();
 
 // Antiforgery (CSRF) on every unsafe verb without annotating each action.
 builder.Services.AddControllersWithViews(options =>

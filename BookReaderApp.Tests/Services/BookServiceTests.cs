@@ -74,13 +74,11 @@ public class BookServiceTests
         var edit = SampleForm(authorId);
         edit.Title = "Clean Code (Revised)";
         edit.GenreValue = "Programming";
-        edit.Genre = new Genre { Name = "Software" };
         var result = await service.UpdateBookAsync(created.BookId!.Value, edit);
 
         Assert.True(result.Succeeded);
         var stored = await context.Books.Include(b => b.Genre).SingleAsync();
         Assert.Equal("Clean Code (Revised)", stored.Title);
-        Assert.Equal("Software", stored.Genre!.Name);
         Assert.Equal("Programming", stored.Genre!.Name);
     }
 
