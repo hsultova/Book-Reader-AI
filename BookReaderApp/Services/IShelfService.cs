@@ -9,4 +9,8 @@ public interface IShelfService
 
     // Returns the user's shelf with the given name, creating it if it doesn't exist.
     Task<Shelf> GetOrCreateAsync(string userId, string name);
+
+    // Deletes the user's shelf, moving any books on it back to the "Want to Read" shelf.
+    // No-op if the shelf doesn't exist or isn't owned by the user.
+    Task DeleteAsync(string userId, int shelfId);
 }

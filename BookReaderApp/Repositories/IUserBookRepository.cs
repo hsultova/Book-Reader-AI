@@ -10,4 +10,7 @@ public interface IUserBookRepository : IRepository<UserBook>
 
     // The single shelf entry for a user/book pair (the unique index guarantees at most one), or null.
     Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId);
+
+    // All of a user's entries currently placed on the given custom shelf.
+    Task<IReadOnlyList<UserBook>> GetForShelfAsync(string userId, int shelfId);
 }

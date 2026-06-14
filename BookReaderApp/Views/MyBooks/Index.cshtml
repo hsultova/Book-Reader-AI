@@ -32,11 +32,19 @@
             <div class="list-group">
                 @foreach (var shelf in Model.CustomShelves)
                 {
-                    <a asp-action="Index" asp-route-shelfId="@shelf.Id"
-                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @(Model.SelectedShelfId == shelf.Id ? "active" : "")">
-                        @shelf.Name
+                    var isActive = Model.SelectedShelfId == shelf.Id;
+                    <div class="list-group-item d-flex justify-content-between align-items-center gap-2 @(isActive ? "active" : "")">
+                        <a asp-action="Index" asp-route-shelfId="@shelf.Id"
+                           class="flex-grow-1 text-decoration-none @(isActive ? "text-white" : "text-body")">
+                            @shelf.Name
+                        </a>
                         <span class="badge bg-secondary rounded-pill">@(Model.ShelfCounts.TryGetValue(shelf.Id, out var sc) ? sc : 0)</span>
-                    </a>
+                        <form asp-action="DeleteShelf" method="post" class="m-0"
+                              onsubmit="return confirm('Delete the shelf &quot;@shelf.Name&quot;? Its books move to Want to Read.');">
+                            <input type="hidden" name="shelfId" value="@shelf.Id" />
+                            <button type="submit" class="btn btn-sm btn-link p-0 @(isActive ? "text-white" : "text-danger")" title="Delete shelf" aria-label="Delete shelf @shelf.Name">&times;</button>
+                        </form>
+                    </div>
                 }
             </div>
         }

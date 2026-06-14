@@ -21,4 +21,7 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
 
     public async Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId) =>
         await Set.FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BookId == bookId);
+
+    public async Task<IReadOnlyList<UserBook>> GetForShelfAsync(string userId, int shelfId) =>
+        await Set.Where(ub => ub.UserId == userId && ub.ShelfId == shelfId).ToListAsync();
 }

@@ -95,6 +95,15 @@ public class MyBooksController : Controller
     }
 
     [HttpPost]
+    public async Task<IActionResult> DeleteShelf(int shelfId)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        await _shelfService.DeleteAsync(userId, shelfId);
+        // Always land on the full list — the filtered shelf no longer exists.
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
     public async Task<IActionResult> Remove(int bookId, string? returnUrl)
     {
         var userId = _userManager.GetUserId(User)!;
