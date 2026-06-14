@@ -13,4 +13,8 @@ public interface IUserBookRepository : IRepository<UserBook>
 
     // All of a user's entries currently placed on the given custom shelf.
     Task<IReadOnlyList<UserBook>> GetForShelfAsync(string userId, int shelfId);
+
+    // Average rating and rating count per book, across all users, for the given books.
+    // Books with no ratings are omitted from the result.
+    Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(IEnumerable<int> bookIds);
 }

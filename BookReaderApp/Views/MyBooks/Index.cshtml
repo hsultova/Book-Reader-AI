@@ -123,6 +123,12 @@
                                     <span class="badge bg-secondary align-self-start mb-2">@shelfLabel</span>
                                 }
                                 <small class="text-muted mb-2">Added @entry.AddedAt.ToString("d MMM yyyy")</small>
+                                @{
+                                    var entrySummary = Model.RatingSummaries.TryGetValue(book.Id, out var entryRs) ? entryRs : null;
+                                }
+                                <div class="mb-2">
+                                    <partial name="_StarRating" model="@(new StarRatingViewModel { BookId = book.Id, UserRating = entry.Rating, Summary = entrySummary, ReturnUrl = returnUrl, CanRate = true })" />
+                                </div>
                                 <div class="mt-auto d-flex flex-wrap gap-1">
                                     <a asp-controller="Books" asp-action="Details" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary">Details</a>
                                     <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = book.Id, CurrentStatus = entry.Status, CurrentShelfId = entry.ShelfId, CurrentShelfName = entry.Shelf?.Name, CustomShelves = Model.CustomShelves, ReturnUrl = returnUrl })" />

@@ -10,6 +10,8 @@
         ?? new Dictionary<int, UserBook>();
     var userShelves = ViewData["UserShelves"] as IReadOnlyList<Shelf>
         ?? Array.Empty<Shelf>();
+    var ratingSummaries = ViewData["RatingSummaries"] as IReadOnlyDictionary<int, RatingSummary>
+        ?? new Dictionary<int, RatingSummary>();
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var searchQuery = ViewData["SearchQuery"] as string;
 }
@@ -68,12 +70,18 @@ else
                         {
                             <span class="badge bg-secondary align-self-start mb-2">@book.Genre.Name</span>
                         }
+                        @{
+                            var cardPlacement = shelfPlacements.TryGetValue(book.Id, out var cardUb) ? cardUb : null;
+                            var cardSummary = ratingSummaries.TryGetValue(book.Id, out var cardRs) ? cardRs : null;
+                        }
+                        <div class="mb-2">
+                            <partial name="_StarRating" model="@(new StarRatingViewModel { BookId = book.Id, UserRating = cardPlacement?.Rating, Summary = cardSummary, ReturnUrl = returnUrl, CanRate = isAuthenticated && cardPlacement is not null })" />
+                        </div>
                         <div class="mt-auto d-flex flex-wrap gap-1">
                             <a asp-action="Details" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary">Details</a>
                             @if (isAuthenticated)
                             {
-                                var placement = shelfPlacements.TryGetValue(book.Id, out var ub) ? ub : null;
-                                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = book.Id, CurrentStatus = placement?.Status, CurrentShelfId = placement?.ShelfId, CurrentShelfName = placement?.Shelf?.Name, CustomShelves = userShelves, ReturnUrl = returnUrl })" />
+                                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = book.Id, CurrentStatus = cardPlacement?.Status, CurrentShelfId = cardPlacement?.ShelfId, CurrentShelfName = cardPlacement?.Shelf?.Name, CustomShelves = userShelves, ReturnUrl = returnUrl })" />
                             }
                             @if (canManage)
                             {

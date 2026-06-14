@@ -25,4 +25,8 @@ public class MyBooksViewModel
     // Counts per custom shelf, keyed by shelf id.
     public IReadOnlyDictionary<int, int> ShelfCounts { get; set; } =
         new Dictionary<int, int>();
+
+    // Community average rating per listed book, keyed by book id. Books with no ratings are absent.
+    public IReadOnlyDictionary<int, RatingSummary> RatingSummaries { get; set; } =
+        new Dictionary<int, RatingSummary>();
 }

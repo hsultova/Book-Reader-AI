@@ -16,4 +16,11 @@ public interface IUserBookService
 
     // Removes the book from the user's shelf (no-op if it isn't shelved).
     Task RemoveAsync(string userId, int bookId);
+
+    // Sets the user's 1–5 star rating for the book; 0 clears the rating. Adds the book to the
+    // user's shelf ("Want to Read") if it isn't already there. Throws if rating is outside 0–5.
+    Task SetRatingAsync(string userId, int bookId, int rating);
+
+    // Average rating and rating count per book, across all users, for the given books.
+    Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(IEnumerable<int> bookIds);
 }

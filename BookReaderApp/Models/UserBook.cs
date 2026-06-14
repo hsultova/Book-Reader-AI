@@ -22,5 +22,9 @@ public class UserBook
 
     public Shelf? Shelf { get; set; }
 
+    // The user's 1–5 star rating of the book, or null if unrated. Independent of shelf
+    // placement: a book can be rated on any shelf (or none of the built-in statuses).
+    public int? Rating { get; set; }
+
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 }

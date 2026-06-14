@@ -44,7 +44,7 @@ public class BooksController : Controller
     {
         var books = await _bookService.SearchBooksAsync(q, page);
         ViewData["SearchQuery"] = q;
-        await PopulateShelfStatusesAsync();
+        await PopulateShelfStatusesAsync(books.Items.Select(b => b.Id));
         return View(books);
     }
 
@@ -58,7 +58,7 @@ public class BooksController : Controller
             return NotFound();
         }
 
-        await PopulateShelfStatusesAsync();
+        await PopulateShelfStatusesAsync(new[] { book.Id });
         return View(book);
     }
 
@@ -183,7 +183,7 @@ public class BooksController : Controller
     // Exposes the current user's shelf placement per book (built-in status or custom shelf)
     // plus the user's custom shelves, so catalog/detail views can render the shelf dropdown
     // with the right label and move targets. Empty for anonymous users.
-    private async Task PopulateShelfStatusesAsync()
+    private async Task PopulateShelfStatusesAsync(IEnumerable<int> bookIds)
     {
         var placements = new Dictionary<int, UserBook>();
         IReadOnlyList<Shelf> shelves = Array.Empty<Shelf>();
@@ -202,6 +202,8 @@ public class BooksController : Controller
 
         ViewData["ShelfPlacements"] = placements;
         ViewData["UserShelves"] = shelves;
+        // Community averages span all users, so they load regardless of authentication.
+        ViewData["RatingSummaries"] = await _userBookService.GetRatingSummariesAsync(bookIds);
     }
 
     private void AddErrors(IReadOnlyList<string> errors)

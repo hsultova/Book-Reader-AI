@@ -140,6 +140,106 @@ public class UserBookServiceTests
     }
 
     [Fact]
+    public async Task SetRatingAsync_WhenBookOnShelf_SetsRating()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        context.UserBooks.Add(new UserBook { UserId = "user-1", Book = book, Status = ReadingStatus.Finished });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetRatingAsync("user-1", book.Id, 4);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal(4, entry.Rating);
+        Assert.Equal(ReadingStatus.Finished, entry.Status);
+    }
+
+    [Fact]
+    public async Task SetRatingAsync_WhenBookNotOnShelf_AddsWithWantToReadAndRating()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetRatingAsync("user-1", book.Id, 5);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal(5, entry.Rating);
+        Assert.Equal(ReadingStatus.WantToRead, entry.Status);
+        Assert.Null(entry.ShelfId);
+    }
+
+    [Fact]
+    public async Task SetRatingAsync_WithZero_ClearsRating()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        context.UserBooks.Add(new UserBook { UserId = "user-1", Book = book, Status = ReadingStatus.Finished, Rating = 3 });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetRatingAsync("user-1", book.Id, 0);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Null(entry.Rating);
+        Assert.Equal(ReadingStatus.Finished, entry.Status);
+    }
+
+    [Theory]
+    [InlineData(6)]
+    [InlineData(-1)]
+    public async Task SetRatingAsync_WithOutOfRangeValue_Throws(int rating)
+    {
+        using var context = NewContext();
+        var service = new UserBookService(new UserBookRepository(context));
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => service.SetRatingAsync("user-1", 1, rating));
+    }
+
+    [Fact]
+    public async Task GetRatingSummariesAsync_ComputesAverageAndCountPerBook()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var rated = new Book { Title = "Rated", AuthorId = author.Id, Isbn = "1" };
+        var unrated = new Book { Title = "Unrated", AuthorId = author.Id, Isbn = "2" };
+        context.Books.AddRange(rated, unrated);
+        context.UserBooks.AddRange(
+            new UserBook { UserId = "user-1", Book = rated, Status = ReadingStatus.Finished, Rating = 4 },
+            new UserBook { UserId = "user-2", Book = rated, Status = ReadingStatus.Finished, Rating = 5 },
+            // An unrated entry on the same book is ignored in the average/count.
+            new UserBook { UserId = "user-3", Book = rated, Status = ReadingStatus.Reading },
+            new UserBook { UserId = "user-1", Book = unrated, Status = ReadingStatus.WantToRead });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        var summaries = await service.GetRatingSummariesAsync(new[] { rated.Id, unrated.Id });
+
+        var summary = Assert.Contains(rated.Id, (IDictionary<int, RatingSummary>)summaries);
+        Assert.Equal(4.5, summary.Average);
+        Assert.Equal(2, summary.Count);
+        // The book nobody rated is omitted entirely.
+        Assert.False(summaries.ContainsKey(unrated.Id));
+    }
+
+    [Fact]
     public async Task SetStatusAsync_WhenBookOnCustomShelf_ClearsShelf()
     {
         using var context = NewContext();

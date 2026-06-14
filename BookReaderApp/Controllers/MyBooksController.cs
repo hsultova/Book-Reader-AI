@@ -51,9 +51,12 @@ public class MyBooksController : Controller
             books = books.Where(ub => Matches(ub, q));
         }
 
+        var shown = books.ToList();
+        var ratingSummaries = await _userBookService.GetRatingSummariesAsync(shown.Select(ub => ub.BookId));
+
         return View(new MyBooksViewModel
         {
-            Books = books.ToList(),
+            Books = shown,
             SelectedStatus = status,
             SelectedShelfId = shelfId,
             SearchQuery = q,
@@ -61,6 +64,7 @@ public class MyBooksController : Controller
             Counts = counts,
             CustomShelves = shelves,
             ShelfCounts = shelfCounts,
+            RatingSummaries = ratingSummaries,
         });
     }
 
@@ -128,6 +132,14 @@ public class MyBooksController : Controller
         await _shelfService.DeleteAsync(userId, shelfId);
         // Always land on the full list — the filtered shelf no longer exists.
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SetRating(int bookId, int rating, string? returnUrl)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        await _userBookService.SetRatingAsync(userId, bookId, rating);
+        return RedirectBack(returnUrl);
     }
 
     [HttpPost]

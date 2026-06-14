@@ -72,4 +72,38 @@ public class UserBookService : IUserBookService
         _userBooks.Remove(existing);
         await _userBooks.SaveChangesAsync();
     }
+
+    public async Task SetRatingAsync(string userId, int bookId, int rating)
+    {
+        if (rating is < 0 or > 5)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rating), rating, "Rating must be between 0 and 5.");
+        }
+
+        // 0 clears the rating; 1–5 sets it.
+        int? value = rating == 0 ? null : rating;
+
+        var existing = await _userBooks.GetForUserAndBookAsync(userId, bookId);
+        if (existing is null)
+        {
+            await _userBooks.AddAsync(new UserBook
+            {
+                UserId = userId,
+                BookId = bookId,
+                Status = ReadingStatus.WantToRead,
+                Rating = value,
+                AddedAt = DateTime.UtcNow,
+            });
+        }
+        else
+        {
+            existing.Rating = value;
+            _userBooks.Update(existing);
+        }
+
+        await _userBooks.SaveChangesAsync();
+    }
+
+    public Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(IEnumerable<int> bookIds) =>
+        _userBooks.GetRatingSummariesAsync(bookIds);
 }

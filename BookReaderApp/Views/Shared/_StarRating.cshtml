@@ -1,0 +1,44 @@
+@model BookReaderApp.Models.ViewModels.StarRatingViewModel
+@{
+    var summary = Model.Summary;
+}
+
+<div class="book-rating d-flex flex-wrap align-items-center gap-2">
+    @* Community average, shown to everyone. *@
+    @if (summary is not null)
+    {
+        <span title="Average of @summary.Count rating@(summary.Count == 1 ? "" : "s")">
+            <span class="text-warning" aria-hidden="true">★</span>
+            <span class="small fw-semibold">@summary.Average.ToString("0.0")</span>
+            <span class="small text-muted">(@summary.Count)</span>
+        </span>
+    }
+    else
+    {
+        <span class="small text-muted">No ratings yet</span>
+    }
+
+    @* The signed-in user's own interactive rating, for books on their shelf. *@
+    @if (Model.CanRate)
+    {
+        <form asp-controller="MyBooks" asp-action="SetRating" method="post" class="d-inline-flex align-items-center gap-1 m-0">
+            <input type="hidden" name="bookId" value="@Model.BookId" />
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+            <span class="small text-muted">Your rating:</span>
+            @for (var star = 1; star <= 5; star++)
+            {
+                var filled = Model.UserRating.HasValue && star <= Model.UserRating.Value;
+                <button type="submit" name="rating" value="@star"
+                        class="btn btn-link p-0 lh-1 fs-5 text-decoration-none @(filled ? "text-warning" : "text-secondary")"
+                        title="Rate @star star@(star == 1 ? "" : "s")"
+                        aria-label="Rate @star out of 5 stars">@(filled ? "★" : "☆")</button>
+            }
+            @if (Model.UserRating.HasValue)
+            {
+                <button type="submit" name="rating" value="0"
+                        class="btn btn-link btn-sm p-0 ms-1 text-muted text-decoration-none"
+                        title="Clear your rating">Clear</button>
+            }
+        </form>
+    }
+</div>
