@@ -14,3 +14,7 @@ public sealed record BookSaveResult(bool Succeeded, int? BookId, IReadOnlyList<s
     public static BookSaveResult Failure(IEnumerable<string> errors) =>
         new(false, null, errors.ToList());
 }
+
+// Outcome of a bulk create: how many books were persisted and which were skipped
+// (e.g. for a missing ISBN) so the UI can report them back to the user.
+public sealed record BulkBookSaveResult(int CreatedCount, IReadOnlyList<string> SkippedTitles);

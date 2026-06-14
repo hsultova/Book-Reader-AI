@@ -13,6 +13,10 @@ public interface IBookService
 
     Task<BookSaveResult> CreateBookAsync(BookFormViewModel model);
 
+    // Bulk-create books (e.g. several picked from a Google Books search). Books without an
+    // ISBN are skipped and reported rather than failing the whole batch.
+    Task<BulkBookSaveResult> CreateBooksAsync(IEnumerable<BookFormViewModel> models);
+
     Task<BookSaveResult> UpdateBookAsync(int id, BookFormViewModel model);
 
     Task<bool> DeleteBookAsync(int id);

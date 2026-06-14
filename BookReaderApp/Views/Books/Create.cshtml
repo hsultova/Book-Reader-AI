@@ -17,8 +17,16 @@
                 </div>
                 <div id="gb-status" class="form-text"></div>
                 <div id="gb-results" class="list-group mt-2"></div>
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <button type="button" id="gb-create-selected" class="btn btn-success" disabled>
+                        Create selected (<span id="gb-selected-count">0</span>)
+                    </button>
+                    <span id="gb-bulk-status" class="form-text m-0"></span>
+                </div>
             </div>
         </div>
+
+        @Html.AntiForgeryToken()
 
         <form asp-action="Create" method="post">
             <partial name="_BookForm" model="Model" />
@@ -77,10 +85,30 @@
         const resultsEl = document.getElementById('gb-results');
         const statusEl = document.getElementById('gb-status');
         const queryEl = document.getElementById('gb-query');
+        const createSelectedBtn = document.getElementById('gb-create-selected');
+        const selectedCountEl = document.getElementById('gb-selected-count');
+        const bulkStatusEl = document.getElementById('gb-bulk-status');
+
+        // Holds the GoogleBookResult objects for the current search, keyed by index so a
+        // checkbox can recover the full record when building the bulk-create payload.
+        let currentResults = [];
+
+        function checkedBoxes() {
+            return Array.from(resultsEl.querySelectorAll('input[type="checkbox"]:checked'));
+        }
+
+        function refreshSelection() {
+            const count = checkedBoxes().length;
+            selectedCountEl.textContent = count;
+            createSelectedBtn.disabled = count === 0;
+        }
 
         async function search() {
             const q = queryEl.value.trim();
             resultsEl.innerHTML = '';
+            currentResults = [];
+            bulkStatusEl.textContent = '';
+            refreshSelection();
             if (!q) { statusEl.textContent = 'Enter a search term.'; return; }
 
             statusEl.textContent = 'Searching…';
@@ -91,14 +119,32 @@
                 const books = await res.json();
                 if (!books.length) { statusEl.textContent = 'No results found.'; return; }
 
-                statusEl.textContent = books.length + ' result(s) — click one to prefill the form.';
-                books.forEach(book => {
-                    const item = document.createElement('button');
-                    item.type = 'button';
-                    item.className = 'list-group-item list-group-item-action';
+                currentResults = books;
+                statusEl.textContent = books.length + ' result(s) — check books to create, or click a title to prefill the form.';
+                books.forEach((book, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex align-items-center gap-2';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'form-check-input flex-shrink-0 m-0';
+                    checkbox.dataset.index = index;
+                    if (!book.isbn) {
+                        checkbox.disabled = true;
+                        checkbox.title = 'No ISBN — cannot be bulk-created.';
+                    }
+                    checkbox.addEventListener('change', refreshSelection);
+
+                    const label = document.createElement('button');
+                    label.type = 'button';
+                    label.className = 'btn btn-link text-start text-decoration-none p-0 flex-grow-1';
                     const author = book.author ? ' — ' + book.author : '';
-                    item.textContent = book.title + author;
-                    item.addEventListener('click', () => prefill(book));
+                    const noIsbn = book.isbn ? '' : ' (no ISBN)';
+                    label.textContent = book.title + author + noIsbn;
+                    label.addEventListener('click', () => prefill(book));
+
+                    item.appendChild(checkbox);
+                    item.appendChild(label);
                     resultsEl.appendChild(item);
                 });
             } catch {
@@ -106,7 +152,57 @@
             }
         }
 
+        async function createSelected() {
+            const boxes = checkedBoxes();
+            if (!boxes.length) return;
+
+            const payload = boxes.map(box => {
+                const book = currentResults[box.dataset.index];
+                return {
+                    Title: book.title,
+                    AuthorValue: book.author,
+                    Isbn: book.isbn,
+                    CoverImageUrl: book.coverImageUrl,
+                    Description: book.description,
+                    GenreValue: book.genre
+                };
+            });
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            createSelectedBtn.disabled = true;
+            bulkStatusEl.textContent = 'Creating…';
+            try {
+                const res = await fetch('@Url.Action("CreateBatch", "Books")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) { bulkStatusEl.textContent = 'Create failed. Please try again.'; createSelectedBtn.disabled = false; return; }
+
+                const result = await res.json();
+                let message = 'Created ' + result.created + ' book(s).';
+                if (result.skipped && result.skipped.length) {
+                    message += ' Skipped ' + result.skipped.length + ' (no ISBN): ' +
+                        result.skipped.map(t => '"' + t + '"').join(', ') + '.';
+                }
+                bulkStatusEl.innerHTML = '';
+                bulkStatusEl.append(message + ' ');
+                const link = document.createElement('a');
+                link.href = '@Url.Action("Index", "Books")';
+                link.textContent = 'View books';
+                bulkStatusEl.append(link);
+
+                // Clear the created rows so they can't be submitted twice.
+                checkedBoxes().forEach(box => { box.checked = true; box.disabled = true; });
+                refreshSelection();
+            } catch {
+                bulkStatusEl.textContent = 'Create failed. Please try again.';
+                createSelectedBtn.disabled = false;
+            }
+        }
+
         document.getElementById('gb-search').addEventListener('click', search);
+        createSelectedBtn.addEventListener('click', createSelected);
         queryEl.addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); search(); }
         });

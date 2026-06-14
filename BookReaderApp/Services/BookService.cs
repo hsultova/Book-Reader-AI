@@ -45,6 +45,38 @@ public class BookService : IBookService
         return BookSaveResult.Success(book.Id);
     }
 
+    public async Task<BulkBookSaveResult> CreateBooksAsync(IEnumerable<BookFormViewModel> models)
+    {
+        var created = 0;
+        var skipped = new List<string>();
+
+        // Cache name -> id within the batch so a repeated author/genre name doesn't
+        // create duplicate rows (the per-name resolvers below always insert otherwise).
+        var authorCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var genreCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var model in models)
+        {
+            if (string.IsNullOrWhiteSpace(model.Isbn))
+            {
+                skipped.Add(string.IsNullOrWhiteSpace(model.Title) ? "(untitled)" : model.Title);
+                continue;
+            }
+
+            var authorId = await ResolveAuthorAsync(model, authorCache);
+            var genreId = await ResolveGenreAsync(model, genreCache);
+            var book = new Book();
+            Apply(model, book, authorId, genreId);
+
+            await _books.AddAsync(book);
+            await _books.SaveChangesAsync();
+            created++;
+        }
+
+        _logger.LogInformation("Bulk create: {Created} book(s) created, {Skipped} skipped.", created, skipped.Count);
+        return new BulkBookSaveResult(created, skipped);
+    }
+
     public async Task<BookSaveResult> UpdateBookAsync(int id, BookFormViewModel model)
     {
         var book = await _books.GetByIdAsync(id);
@@ -100,6 +132,43 @@ public class BookService : IBookService
         var genre = new Genre { Name = model.GenreValue.Trim() };
         await _genres.AddAsync(genre);
         await _genres.SaveChangesAsync();
+        return genre.Id;
+    }
+
+    // Cache-aware variant for bulk create: dedupes new authors by name within the batch.
+    private async Task<int> ResolveAuthorAsync(BookFormViewModel model, Dictionary<string, int> cache)
+    {
+        if (int.TryParse(model.AuthorValue, out var existingId) && existingId > 0)
+            return existingId;
+
+        var name = model.AuthorValue!.Trim();
+        if (cache.TryGetValue(name, out var cachedId))
+            return cachedId;
+
+        var author = new Author { Name = name };
+        await _authors.AddAsync(author);
+        await _authors.SaveChangesAsync();
+        cache[name] = author.Id;
+        return author.Id;
+    }
+
+    // Cache-aware variant for bulk create: dedupes new genres by name within the batch.
+    private async Task<int?> ResolveGenreAsync(BookFormViewModel model, Dictionary<string, int> cache)
+    {
+        if (string.IsNullOrWhiteSpace(model.GenreValue))
+            return null;
+
+        if (int.TryParse(model.GenreValue, out var existingId) && existingId > 0)
+            return existingId;
+
+        var name = model.GenreValue.Trim();
+        if (cache.TryGetValue(name, out var cachedId))
+            return cachedId;
+
+        var genre = new Genre { Name = name };
+        await _genres.AddAsync(genre);
+        await _genres.SaveChangesAsync();
+        cache[name] = genre.Id;
         return genre.Id;
     }
 

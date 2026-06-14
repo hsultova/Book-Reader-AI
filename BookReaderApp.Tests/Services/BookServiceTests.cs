@@ -53,6 +53,62 @@ public class BookServiceTests
     }
 
     [Fact]
+    public async Task CreateBooks_WithValidModels_CreatesAllAndReturnsCount()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+
+        var models = new[]
+        {
+            new BookFormViewModel { Title = "Clean Code", AuthorValue = "Robert C. Martin", Isbn = "111" },
+            new BookFormViewModel { Title = "The Pragmatic Programmer", AuthorValue = "Andrew Hunt", Isbn = "222" }
+        };
+
+        var result = await service.CreateBooksAsync(models);
+
+        Assert.Equal(2, result.CreatedCount);
+        Assert.Empty(result.SkippedTitles);
+        Assert.Equal(2, await context.Books.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateBooks_WithMissingIsbn_SkipsThoseAndReportsTitles()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+
+        var models = new[]
+        {
+            new BookFormViewModel { Title = "Has ISBN", AuthorValue = "Author A", Isbn = "123" },
+            new BookFormViewModel { Title = "No ISBN", AuthorValue = "Author B", Isbn = "" }
+        };
+
+        var result = await service.CreateBooksAsync(models);
+
+        Assert.Equal(1, result.CreatedCount);
+        Assert.Equal(new[] { "No ISBN" }, result.SkippedTitles);
+        Assert.Equal(1, await context.Books.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateBooks_WithDuplicateAuthorName_CreatesAuthorOnce()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+
+        var models = new[]
+        {
+            new BookFormViewModel { Title = "Clean Code", AuthorValue = "Robert C. Martin", Isbn = "111" },
+            new BookFormViewModel { Title = "Clean Architecture", AuthorValue = "Robert C. Martin", Isbn = "222" }
+        };
+
+        var result = await service.CreateBooksAsync(models);
+
+        Assert.Equal(2, result.CreatedCount);
+        Assert.Equal(1, await context.Authors.CountAsync());
+    }
+
+    [Fact]
     public async Task GetBookByIdAsync_WithMissingId_ReturnsNull()
     {
         using var context = NewContext();

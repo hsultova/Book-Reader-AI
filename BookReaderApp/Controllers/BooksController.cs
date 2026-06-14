@@ -93,6 +93,22 @@ public class BooksController : Controller
         return Json(results);
     }
 
+    // Bulk-create the books the user checked among the Google Books results. Posted as JSON
+    // from the Create page; books without an ISBN are skipped and reported back.
+    [HttpPost]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Moderator}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBatch([FromBody] List<BookFormViewModel> books)
+    {
+        if (books is null || books.Count == 0)
+        {
+            return Json(new { created = 0, skipped = Array.Empty<string>() });
+        }
+
+        var result = await _bookService.CreateBooksAsync(books);
+        return Json(new { created = result.CreatedCount, skipped = result.SkippedTitles });
+    }
+
     [HttpGet]
     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Moderator}")]
     public async Task<IActionResult> Edit(int id)
