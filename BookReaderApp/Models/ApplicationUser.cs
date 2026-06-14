@@ -12,4 +12,7 @@ public class ApplicationUser : IdentityUser
 
     // The user's personal bookshelf entries.
     public ICollection<UserBook> UserBooks { get; set; } = new List<UserBook>();
+
+    // The user's custom shelves.
+    public ICollection<Shelf> Shelves { get; set; } = new List<Shelf>();
 }

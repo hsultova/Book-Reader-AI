@@ -116,4 +116,49 @@ public class UserBookServiceTests
 
         Assert.Empty(context.UserBooks);
     }
+
+    [Fact]
+    public async Task SetShelfAsync_PlacesBookOnShelf_AndClearsStatus()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        var shelf = new Shelf { UserId = "user-1", Name = "Favorites" };
+        context.Shelves.Add(shelf);
+        context.UserBooks.Add(new UserBook { UserId = "user-1", Book = book, Status = ReadingStatus.Reading });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetShelfAsync("user-1", book.Id, shelf.Id);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal(shelf.Id, entry.ShelfId);
+        Assert.Null(entry.Status);
+    }
+
+    [Fact]
+    public async Task SetStatusAsync_WhenBookOnCustomShelf_ClearsShelf()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        var shelf = new Shelf { UserId = "user-1", Name = "Favorites" };
+        context.Shelves.Add(shelf);
+        await context.SaveChangesAsync();
+        context.UserBooks.Add(new UserBook { UserId = "user-1", BookId = book.Id, ShelfId = shelf.Id });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetStatusAsync("user-1", book.Id, ReadingStatus.Finished);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal(ReadingStatus.Finished, entry.Status);
+        Assert.Null(entry.ShelfId);
+    }
 }

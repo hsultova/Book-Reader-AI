@@ -6,9 +6,12 @@
     var canManage = User.IsInRole(AppRoles.Admin)
         || User.IsInRole(AppRoles.Moderator);
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var shelfStatuses = ViewData["ShelfStatuses"] as IReadOnlyDictionary<int, ReadingStatus>
-        ?? new Dictionary<int, ReadingStatus>();
+    var shelfPlacements = ViewData["ShelfPlacements"] as IReadOnlyDictionary<int, UserBook>
+        ?? new Dictionary<int, UserBook>();
+    var userShelves = ViewData["UserShelves"] as IReadOnlyList<Shelf>
+        ?? Array.Empty<Shelf>();
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var placement = shelfPlacements.TryGetValue(Model.Id, out var ub) ? ub : null;
 }
 
 <div class="row">
@@ -42,7 +45,7 @@
             <a asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
             @if (isAuthenticated)
             {
-                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = Model.Id, CurrentStatus = shelfStatuses.TryGetValue(Model.Id, out var s) ? s : null, ReturnUrl = returnUrl })" />
+                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = Model.Id, CurrentStatus = placement?.Status, CurrentShelfId = placement?.ShelfId, CurrentShelfName = placement?.Shelf?.Name, CustomShelves = userShelves, ReturnUrl = returnUrl })" />
             }
             @if (canManage)
             {

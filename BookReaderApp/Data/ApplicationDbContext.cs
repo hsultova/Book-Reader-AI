@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<UserBook> UserBooks => Set<UserBook>();
 
+    public DbSet<Shelf> Shelves => Set<Shelf>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -46,8 +48,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(ub => ub.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Optional placement on a custom shelf. Restrict: shelves can't be deleted
+            // while books still reference them (no shelf delete is in scope anyway).
+            entity.HasOne(ub => ub.Shelf)
+                .WithMany()
+                .HasForeignKey(ub => ub.ShelfId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // A user can shelve a given book only once.
             entity.HasIndex(ub => new { ub.UserId, ub.BookId }).IsUnique();
+        });
+
+        builder.Entity<Shelf>(entity =>
+        {
+            entity.HasOne(s => s.User)
+                .WithMany(u => u.Shelves)
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Shelf names are unique per user.
+            entity.HasIndex(s => new { s.UserId, s.Name }).IsUnique();
         });
     }
 }

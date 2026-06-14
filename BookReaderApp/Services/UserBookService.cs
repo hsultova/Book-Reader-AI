@@ -31,6 +31,30 @@ public class UserBookService : IUserBookService
         else
         {
             existing.Status = status;
+            existing.ShelfId = null;
+            _userBooks.Update(existing);
+        }
+
+        await _userBooks.SaveChangesAsync();
+    }
+
+    public async Task SetShelfAsync(string userId, int bookId, int shelfId)
+    {
+        var existing = await _userBooks.GetForUserAndBookAsync(userId, bookId);
+        if (existing is null)
+        {
+            await _userBooks.AddAsync(new UserBook
+            {
+                UserId = userId,
+                BookId = bookId,
+                ShelfId = shelfId,
+                AddedAt = DateTime.UtcNow,
+            });
+        }
+        else
+        {
+            existing.ShelfId = shelfId;
+            existing.Status = null;
             _userBooks.Update(existing);
         }
 

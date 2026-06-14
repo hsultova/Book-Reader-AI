@@ -70,7 +70,12 @@ public static class DbInitializer
         if (testUser is not null &&
             !await db.UserBooks.AnyAsync(ub => ub.UserId == testUser.Id && ub.BookId == book.Id))
         {
-            db.UserBooks.Add(new UserBook { UserId = testUser.Id, BookId = book.Id });
+            db.UserBooks.Add(new UserBook
+            {
+                UserId = testUser.Id,
+                BookId = book.Id,
+                Status = ReadingStatus.WantToRead
+            });
             await db.SaveChangesAsync();
         }
     }

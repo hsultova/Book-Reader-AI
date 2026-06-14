@@ -1,29 +1,60 @@
 @using BookReaderApp.Models
 @model BookReaderApp.Models.ViewModels.ShelfDropdownViewModel
 @{
-    var shelved = Model.CurrentStatus.HasValue;
-    var label = shelved ? Model.CurrentStatus!.Value.DisplayName() : "Add to shelf";
+    var shelved = Model.CurrentStatus.HasValue || Model.CurrentShelfId.HasValue;
+    var label = Model.CurrentShelfName
+        ?? Model.CurrentStatus?.DisplayName()
+        ?? "Add to shelf";
     var btnClass = shelved ? "btn-primary" : "btn-outline-primary";
 }
 
 <div class="btn-group">
-    <button type="button" class="btn btn-sm @btnClass dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+    <button type="button" class="btn btn-sm @btnClass dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
         @label
     </button>
     <ul class="dropdown-menu">
         @foreach (var status in Enum.GetValues<ReadingStatus>())
         {
+            var active = Model.CurrentStatus == status && Model.CurrentShelfId == null;
             <li>
                 <form asp-controller="MyBooks" asp-action="SetStatus" method="post" class="m-0">
                     <input type="hidden" name="bookId" value="@Model.BookId" />
                     <input type="hidden" name="status" value="@status" />
                     <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
-                    <button type="submit" class="dropdown-item @(Model.CurrentStatus == status ? "active" : "")">
+                    <button type="submit" class="dropdown-item @(active ? "active" : "")">
                         @status.DisplayName()
                     </button>
                 </form>
             </li>
         }
+
+        @if (Model.CustomShelves.Count > 0)
+        {
+            <li><hr class="dropdown-divider" /></li>
+            @foreach (var shelf in Model.CustomShelves)
+            {
+                <li>
+                    <form asp-controller="MyBooks" asp-action="SetShelf" method="post" class="m-0">
+                        <input type="hidden" name="bookId" value="@Model.BookId" />
+                        <input type="hidden" name="shelfId" value="@shelf.Id" />
+                        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                        <button type="submit" class="dropdown-item @(Model.CurrentShelfId == shelf.Id ? "active" : "")">
+                            @shelf.Name
+                        </button>
+                    </form>
+                </li>
+            }
+        }
+
+        <li><hr class="dropdown-divider" /></li>
+        <li>
+            <form asp-controller="MyBooks" asp-action="CreateShelf" method="post" class="px-3 py-1 m-0">
+                <input type="hidden" name="bookId" value="@Model.BookId" />
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                <input type="text" name="name" class="form-control form-control-sm" placeholder="New shelf name" maxlength="60" aria-label="New shelf name" />
+            </form>
+        </li>
+
         @if (shelved)
         {
             <li><hr class="dropdown-divider" /></li>

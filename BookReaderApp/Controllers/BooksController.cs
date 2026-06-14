@@ -17,6 +17,7 @@ public class BooksController : Controller
     private readonly IGenreService _genreService;
     private readonly IGoogleBooksService _googleBooksService;
     private readonly IUserBookService _userBookService;
+    private readonly IShelfService _shelfService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public BooksController(
@@ -25,6 +26,7 @@ public class BooksController : Controller
         IGenreService genreService,
         IGoogleBooksService googleBooksService,
         IUserBookService userBookService,
+        IShelfService shelfService,
         UserManager<ApplicationUser> userManager)
     {
         _bookService = bookService;
@@ -32,6 +34,7 @@ public class BooksController : Controller
         _genreService = genreService;
         _googleBooksService = googleBooksService;
         _userBookService = userBookService;
+        _shelfService = shelfService;
         _userManager = userManager;
     }
 
@@ -176,22 +179,28 @@ public class BooksController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Exposes the current user's reading status per book so catalog/detail views can render
-    // the shelf dropdown with the right label. Empty for anonymous users.
+    // Exposes the current user's shelf placement per book (built-in status or custom shelf)
+    // plus the user's custom shelves, so catalog/detail views can render the shelf dropdown
+    // with the right label and move targets. Empty for anonymous users.
     private async Task PopulateShelfStatusesAsync()
     {
-        var statuses = new Dictionary<int, ReadingStatus>();
+        var placements = new Dictionary<int, UserBook>();
+        IReadOnlyList<Shelf> shelves = Array.Empty<Shelf>();
+
         if (User.Identity?.IsAuthenticated == true)
         {
             var userId = _userManager.GetUserId(User)!;
-            var shelf = await _userBookService.GetMyBooksAsync(userId);
-            foreach (var entry in shelf)
+            var entries = await _userBookService.GetMyBooksAsync(userId);
+            foreach (var entry in entries)
             {
-                statuses[entry.BookId] = entry.Status;
+                placements[entry.BookId] = entry;
             }
+
+            shelves = await _shelfService.GetShelvesAsync(userId);
         }
 
-        ViewData["ShelfStatuses"] = statuses;
+        ViewData["ShelfPlacements"] = placements;
+        ViewData["UserShelves"] = shelves;
     }
 
     private void AddErrors(IReadOnlyList<string> errors)

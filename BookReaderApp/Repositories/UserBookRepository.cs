@@ -14,6 +14,7 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
         await Set
             .Include(ub => ub.Book)
                 .ThenInclude(b => b!.Author)
+            .Include(ub => ub.Shelf)
             .Where(ub => ub.UserId == userId)
             .OrderByDescending(ub => ub.AddedAt)
             .ToListAsync();
