@@ -14,5 +14,7 @@ public class UserBook
 
     public Book? Book { get; set; }
 
+    public ReadingStatus Status { get; set; } = ReadingStatus.WantToRead;
+
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 }

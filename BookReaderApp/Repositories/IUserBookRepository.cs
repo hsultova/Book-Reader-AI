@@ -7,4 +7,7 @@ namespace BookReaderApp.Repositories;
 public interface IUserBookRepository : IRepository<UserBook>
 {
     Task<IReadOnlyList<UserBook>> GetForUserAsync(string userId);
+
+    // The single shelf entry for a user/book pair (the unique index guarantees at most one), or null.
+    Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId);
 }

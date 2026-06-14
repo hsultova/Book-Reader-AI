@@ -2,6 +2,7 @@ using BookReaderApp.Models;
 using BookReaderApp.Models.ViewModels;
 using BookReaderApp.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -15,17 +16,23 @@ public class BooksController : Controller
     private readonly IAuthorService _authorService;
     private readonly IGenreService _genreService;
     private readonly IGoogleBooksService _googleBooksService;
+    private readonly IUserBookService _userBookService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public BooksController(
         IBookService bookService,
         IAuthorService authorService,
         IGenreService genreService,
-        IGoogleBooksService googleBooksService)
+        IGoogleBooksService googleBooksService,
+        IUserBookService userBookService,
+        UserManager<ApplicationUser> userManager)
     {
         _bookService = bookService;
         _authorService = authorService;
         _genreService = genreService;
         _googleBooksService = googleBooksService;
+        _userBookService = userBookService;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -33,6 +40,7 @@ public class BooksController : Controller
     public async Task<IActionResult> Index(int page = 1)
     {
         var books = await _bookService.GetBooksAsync(page);
+        await PopulateShelfStatusesAsync();
         return View(books);
     }
 
@@ -46,6 +54,7 @@ public class BooksController : Controller
             return NotFound();
         }
 
+        await PopulateShelfStatusesAsync();
         return View(book);
     }
 
@@ -165,6 +174,24 @@ public class BooksController : Controller
     {
         await _bookService.DeleteBookAsync(id);
         return RedirectToAction(nameof(Index));
+    }
+
+    // Exposes the current user's reading status per book so catalog/detail views can render
+    // the shelf dropdown with the right label. Empty for anonymous users.
+    private async Task PopulateShelfStatusesAsync()
+    {
+        var statuses = new Dictionary<int, ReadingStatus>();
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var shelf = await _userBookService.GetMyBooksAsync(userId);
+            foreach (var entry in shelf)
+            {
+                statuses[entry.BookId] = entry.Status;
+            }
+        }
+
+        ViewData["ShelfStatuses"] = statuses;
     }
 
     private void AddErrors(IReadOnlyList<string> errors)

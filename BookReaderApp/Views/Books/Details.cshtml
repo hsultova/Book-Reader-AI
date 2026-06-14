@@ -1,8 +1,14 @@
+@using BookReaderApp.Models
+@using BookReaderApp.Models.ViewModels
 @model BookReaderApp.Models.Book
 @{
     ViewData["Title"] = Model.Title;
-    var canManage = User.IsInRole(BookReaderApp.Models.AppRoles.Admin)
-        || User.IsInRole(BookReaderApp.Models.AppRoles.Moderator);
+    var canManage = User.IsInRole(AppRoles.Admin)
+        || User.IsInRole(AppRoles.Moderator);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var shelfStatuses = ViewData["ShelfStatuses"] as IReadOnlyDictionary<int, ReadingStatus>
+        ?? new Dictionary<int, ReadingStatus>();
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="row">
@@ -32,8 +38,12 @@
         {
             <p>@Model.Description</p>
         }
-        <div class="mt-3">
+        <div class="mt-3 d-flex flex-wrap gap-1">
             <a asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
+            @if (isAuthenticated)
+            {
+                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = Model.Id, CurrentStatus = shelfStatuses.TryGetValue(Model.Id, out var s) ? s : null, ReturnUrl = returnUrl })" />
+            }
             @if (canManage)
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>

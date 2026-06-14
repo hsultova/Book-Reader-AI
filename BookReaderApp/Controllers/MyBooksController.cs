@@ -1,4 +1,5 @@
 using BookReaderApp.Models;
+using BookReaderApp.Models.ViewModels;
 using BookReaderApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,10 +23,45 @@ public class MyBooksController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(ReadingStatus? status)
     {
         var userId = _userManager.GetUserId(User)!;
-        var books = await _userBookService.GetMyBooksAsync(userId);
-        return View(books);
+        var all = await _userBookService.GetMyBooksAsync(userId);
+
+        var counts = Enum.GetValues<ReadingStatus>()
+            .ToDictionary(s => s, s => all.Count(ub => ub.Status == s));
+
+        var books = status is null
+            ? all
+            : all.Where(ub => ub.Status == status).ToList();
+
+        return View(new MyBooksViewModel
+        {
+            Books = books,
+            SelectedStatus = status,
+            TotalCount = all.Count,
+            Counts = counts,
+        });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> SetStatus(int bookId, ReadingStatus status, string? returnUrl)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        await _userBookService.SetStatusAsync(userId, bookId, status);
+        return RedirectBack(returnUrl);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Remove(int bookId, string? returnUrl)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        await _userBookService.RemoveAsync(userId, bookId);
+        return RedirectBack(returnUrl);
+    }
+
+    private IActionResult RedirectBack(string? returnUrl) =>
+        !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? Redirect(returnUrl)
+            : RedirectToAction(nameof(Index));
 }

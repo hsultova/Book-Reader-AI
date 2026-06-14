@@ -1,0 +1,39 @@
+@using BookReaderApp.Models
+@model BookReaderApp.Models.ViewModels.ShelfDropdownViewModel
+@{
+    var shelved = Model.CurrentStatus.HasValue;
+    var label = shelved ? Model.CurrentStatus!.Value.DisplayName() : "Add to shelf";
+    var btnClass = shelved ? "btn-primary" : "btn-outline-primary";
+}
+
+<div class="btn-group">
+    <button type="button" class="btn btn-sm @btnClass dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        @label
+    </button>
+    <ul class="dropdown-menu">
+        @foreach (var status in Enum.GetValues<ReadingStatus>())
+        {
+            <li>
+                <form asp-controller="MyBooks" asp-action="SetStatus" method="post" class="m-0">
+                    <input type="hidden" name="bookId" value="@Model.BookId" />
+                    <input type="hidden" name="status" value="@status" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="dropdown-item @(Model.CurrentStatus == status ? "active" : "")">
+                        @status.DisplayName()
+                    </button>
+                </form>
+            </li>
+        }
+        @if (shelved)
+        {
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <form asp-controller="MyBooks" asp-action="Remove" method="post" class="m-0">
+                    <input type="hidden" name="bookId" value="@Model.BookId" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="dropdown-item text-danger">Remove from My Books</button>
+                </form>
+            </li>
+        }
+    </ul>
+</div>

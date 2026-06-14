@@ -17,4 +17,7 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
             .Where(ub => ub.UserId == userId)
             .OrderByDescending(ub => ub.AddedAt)
             .ToListAsync();
+
+    public async Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId) =>
+        await Set.FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BookId == bookId);
 }

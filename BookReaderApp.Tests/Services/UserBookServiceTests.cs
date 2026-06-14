@@ -48,4 +48,72 @@ public class UserBookServiceTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public async Task SetStatusAsync_WhenBookNotOnShelf_AddsUserBookWithStatus()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetStatusAsync("user-1", book.Id, ReadingStatus.Reading);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal("user-1", entry.UserId);
+        Assert.Equal(book.Id, entry.BookId);
+        Assert.Equal(ReadingStatus.Reading, entry.Status);
+    }
+
+    [Fact]
+    public async Task SetStatusAsync_WhenBookAlreadyOnShelf_UpdatesStatus()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        context.UserBooks.Add(new UserBook { UserId = "user-1", Book = book, Status = ReadingStatus.WantToRead });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.SetStatusAsync("user-1", book.Id, ReadingStatus.Finished);
+
+        var entry = Assert.Single(context.UserBooks);
+        Assert.Equal(ReadingStatus.Finished, entry.Status);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_WhenBookOnShelf_RemovesEntry()
+    {
+        using var context = NewContext();
+        var author = new Author { Name = "A" };
+        context.Authors.Add(author);
+        await context.SaveChangesAsync();
+        var book = new Book { Title = "Book", AuthorId = author.Id, Isbn = "1" };
+        context.Books.Add(book);
+        context.UserBooks.Add(new UserBook { UserId = "user-1", Book = book });
+        await context.SaveChangesAsync();
+
+        var service = new UserBookService(new UserBookRepository(context));
+        await service.RemoveAsync("user-1", book.Id);
+
+        Assert.Empty(context.UserBooks);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_WhenBookNotOnShelf_DoesNothing()
+    {
+        using var context = NewContext();
+        var service = new UserBookService(new UserBookRepository(context));
+
+        await service.RemoveAsync("user-1", 999);
+
+        Assert.Empty(context.UserBooks);
+    }
 }
