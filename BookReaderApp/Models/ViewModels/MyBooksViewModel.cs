@@ -10,6 +10,9 @@ public class MyBooksViewModel
 
     public int? SelectedShelfId { get; set; }
 
+    // The active free-text search term across title, author, ISBN and keywords, if any.
+    public string? SearchQuery { get; set; }
+
     public int TotalCount { get; set; }
 
     // Counts per built-in status.

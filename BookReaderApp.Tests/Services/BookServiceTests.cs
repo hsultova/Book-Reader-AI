@@ -16,7 +16,7 @@ public class BookServiceTests
             .Options);
 
     private static BookService NewService(ApplicationDbContext context) =>
-        new(new EfRepository<Book>(context), new AuthorRepository(context), new GenreRepository(context), NullLogger<BookService>.Instance);
+        new(new BookRepository(context), new AuthorRepository(context), new GenreRepository(context), NullLogger<BookService>.Instance);
 
     private static async Task<int> SeedAuthorAsync(ApplicationDbContext context)
     {

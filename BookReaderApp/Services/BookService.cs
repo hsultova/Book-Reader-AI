@@ -8,13 +8,13 @@ namespace BookReaderApp.Services;
 // model and the Book entity. No ASP.NET types here — outcomes are returned as results.
 public class BookService : IBookService
 {
-    private readonly IRepository<Book> _books;
+    private readonly IBookRepository _books;
     private readonly IAuthorRepository _authors;
     private readonly IGenreRepository _genres;
     private readonly ILogger<BookService> _logger;
 
     public BookService(
-        IRepository<Book> books,
+        IBookRepository books,
         IAuthorRepository authors,
         IGenreRepository genres,
         ILogger<BookService> logger)
@@ -27,6 +27,10 @@ public class BookService : IBookService
 
     public Task<PagedResult<Book>> GetBooksAsync(int page, int pageSize = PagedResult<Book>.DefaultPageSize) =>
         _books.GetPagedAsync(page, pageSize);
+
+    public Task<PagedResult<Book>> SearchBooksAsync(
+        string? query, int page, int pageSize = PagedResult<Book>.DefaultPageSize) =>
+        _books.SearchPagedAsync(query, page, pageSize);
 
     public Task<Book?> GetBookByIdAsync(int id) =>
         _books.GetByIdAsync(id);

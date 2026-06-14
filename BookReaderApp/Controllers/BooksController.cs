@@ -40,9 +40,10 @@ public class BooksController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Index(int page = 1)
+    public async Task<IActionResult> Index(string? q, int page = 1)
     {
-        var books = await _bookService.GetBooksAsync(page);
+        var books = await _bookService.SearchBooksAsync(q, page);
+        ViewData["SearchQuery"] = q;
         await PopulateShelfStatusesAsync();
         return View(books);
     }

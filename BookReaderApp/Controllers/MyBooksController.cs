@@ -26,7 +26,7 @@ public class MyBooksController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(ReadingStatus? status, int? shelfId)
+    public async Task<IActionResult> Index(ReadingStatus? status, int? shelfId, string? q)
     {
         var userId = _userManager.GetUserId(User)!;
         var all = await _userBookService.GetMyBooksAsync(userId);
@@ -36,26 +36,53 @@ public class MyBooksController : Controller
             .ToDictionary(s => s, s => all.Count(ub => ub.Status == s));
         var shelfCounts = shelves.ToDictionary(s => s.Id, s => all.Count(ub => ub.ShelfId == s.Id));
 
-        IReadOnlyList<UserBook> books = all;
+        IEnumerable<UserBook> books = all;
         if (status is not null)
         {
-            books = all.Where(ub => ub.Status == status).ToList();
+            books = books.Where(ub => ub.Status == status);
         }
         else if (shelfId is not null)
         {
-            books = all.Where(ub => ub.ShelfId == shelfId).ToList();
+            books = books.Where(ub => ub.ShelfId == shelfId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            books = books.Where(ub => Matches(ub, q));
         }
 
         return View(new MyBooksViewModel
         {
-            Books = books,
+            Books = books.ToList(),
             SelectedStatus = status,
             SelectedShelfId = shelfId,
+            SearchQuery = q,
             TotalCount = all.Count,
             Counts = counts,
             CustomShelves = shelves,
             ShelfCounts = shelfCounts,
         });
+    }
+
+    // Case-insensitive match of the term against a shelf entry's title, author, ISBN,
+    // description and genre — the same fields the catalog search covers.
+    private static bool Matches(UserBook entry, string query)
+    {
+        var term = query.Trim();
+        var book = entry.Book;
+        if (book is null)
+        {
+            return false;
+        }
+
+        bool Has(string? value) =>
+            value is not null && value.Contains(term, StringComparison.OrdinalIgnoreCase);
+
+        return Has(book.Title)
+            || Has(book.Author?.Name)
+            || Has(book.Isbn)
+            || Has(book.Description)
+            || Has(book.Genre?.Name);
     }
 
     [HttpPost]

@@ -9,6 +9,11 @@ public interface IBookService
 {
     Task<PagedResult<Book>> GetBooksAsync(int page, int pageSize = PagedResult<Book>.DefaultPageSize);
 
+    // Paginated catalog search across title, author, ISBN, description and genre.
+    // A null/blank query returns the full catalog.
+    Task<PagedResult<Book>> SearchBooksAsync(
+        string? query, int page, int pageSize = PagedResult<Book>.DefaultPageSize);
+
     Task<Book?> GetBookByIdAsync(int id);
 
     Task<BookSaveResult> CreateBookAsync(BookFormViewModel model);

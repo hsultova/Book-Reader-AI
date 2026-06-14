@@ -51,7 +51,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Data-access layer. Open-generic registration gives every entity a CRUD repository.
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
-builder.Services.AddScoped<IRepository<Book>, BookRepository>();
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IRepository<Book>>(sp => sp.GetRequiredService<IBookRepository>());
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IUserBookRepository, UserBookRepository>();
