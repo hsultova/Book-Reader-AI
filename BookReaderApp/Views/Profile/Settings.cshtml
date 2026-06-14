@@ -1,0 +1,59 @@
+@model BookReaderApp.Models.ViewModels.ProfileSettingsViewModel
+@{
+    ViewData["Title"] = "Account settings";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Account settings</h1>
+
+        <form asp-action="Settings" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Bio" class="form-label"></label>
+                <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Bio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FavoriteGenre" class="form-label"></label>
+                <input asp-for="FavoriteGenre" class="form-control" />
+                <span asp-validation-for="FavoriteGenre" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ReadingGoal" class="form-label"></label>
+                <input asp-for="ReadingGoal" class="form-control" type="number" min="0" max="1000" />
+                <span asp-validation-for="ReadingGoal" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ProfilePicture" class="form-label"></label>
+                @if (!string.IsNullOrEmpty(Model.ExistingProfilePicturePath))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.ExistingProfilePicturePath" alt="Current profile picture"
+                             class="rounded-circle object-fit-cover" width="72" height="72" />
+                    </div>
+                }
+                <input asp-for="ProfilePicture" class="form-control" type="file" accept="image/*" />
+                <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                <div class="form-text">JPG, PNG, GIF, or WEBP up to 2 MB.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

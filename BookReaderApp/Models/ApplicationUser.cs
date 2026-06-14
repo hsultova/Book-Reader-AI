@@ -8,6 +8,17 @@ public class ApplicationUser : IdentityUser
 {
     public string DisplayName { get; set; } = string.Empty;
 
+    // Short "About me" blurb shown on the profile page.
+    public string? Bio { get; set; }
+
+    public string? FavoriteGenre { get; set; }
+
+    // Yearly books-to-read target.
+    public int? ReadingGoal { get; set; }
+
+    // Web-relative path to the uploaded avatar, e.g. /uploads/avatars/{id}.png.
+    public string? ProfilePicturePath { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // The user's personal bookshelf entries.

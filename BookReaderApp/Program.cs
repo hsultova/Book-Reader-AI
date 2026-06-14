@@ -60,6 +60,7 @@ builder.Services.AddScoped<IShelfRepository, ShelfRepository>();
 
 // Business-logic layer. Scoped to match the Identity managers / DbContext it depends on.
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IBookService, BookService>();
