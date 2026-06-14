@@ -13,7 +13,7 @@ public class GoogleBooksService : IGoogleBooksService
     private const int MaxTitle = 200;
     private const int MaxIsbn = 20;
     private const int MaxDescription = 2000;
-    private const int MaxResults = 10;
+    private const int MaxResults = 40; // Google Books caps a single request at 40.
 
     private readonly HttpClient _http;
     private readonly GoogleBooksOptions _options;
@@ -94,7 +94,11 @@ public class GoogleBooksService : IGoogleBooksService
                 Genre: FirstOf(info, "categories")));
         }
 
-        return results;
+        // Surface books that have an ISBN first — only those can be bulk-created. OrderBy is a
+        // stable sort, so the original Google relevance order is preserved within each group.
+        return results
+            .OrderByDescending(r => !string.IsNullOrWhiteSpace(r.Isbn))
+            .ToList();
     }
 
     private static string? ExtractIsbn(JsonElement info)

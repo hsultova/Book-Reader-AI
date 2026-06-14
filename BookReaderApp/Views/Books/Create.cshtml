@@ -17,6 +17,11 @@
                 </div>
                 <div id="gb-status" class="form-text"></div>
                 <div id="gb-results" class="list-group mt-2"></div>
+                <nav id="gb-pager" class="d-none align-items-center justify-content-between mt-2">
+                    <button type="button" id="gb-prev" class="btn btn-sm btn-outline-secondary">Previous</button>
+                    <span id="gb-page-info" class="form-text m-0"></span>
+                    <button type="button" id="gb-next" class="btn btn-sm btn-outline-secondary">Next</button>
+                </nav>
                 <div class="d-flex align-items-center gap-2 mt-3">
                     <button type="button" id="gb-create-selected" class="btn btn-success" disabled>
                         Create selected (<span id="gb-selected-count">0</span>)
@@ -82,31 +87,91 @@
             window.scrollTo({ top: document.querySelector('form').offsetTop, behavior: 'smooth' });
         }
 
+        const PAGE_SIZE = 10;
         const resultsEl = document.getElementById('gb-results');
         const statusEl = document.getElementById('gb-status');
         const queryEl = document.getElementById('gb-query');
         const createSelectedBtn = document.getElementById('gb-create-selected');
         const selectedCountEl = document.getElementById('gb-selected-count');
         const bulkStatusEl = document.getElementById('gb-bulk-status');
+        const pagerEl = document.getElementById('gb-pager');
+        const pageInfoEl = document.getElementById('gb-page-info');
+        const prevBtn = document.getElementById('gb-prev');
+        const nextBtn = document.getElementById('gb-next');
 
-        // Holds the GoogleBookResult objects for the current search, keyed by index so a
-        // checkbox can recover the full record when building the bulk-create payload.
+        // All results for the current search (server returns them ISBN-first). Selection and
+        // created state are tracked by result index so they persist as the user pages through.
         let currentResults = [];
+        let selectedIndices = new Set();
+        let createdIndices = new Set();
+        let currentPage = 0;
 
-        function checkedBoxes() {
-            return Array.from(resultsEl.querySelectorAll('input[type="checkbox"]:checked'));
+        function totalPages() {
+            return Math.max(1, Math.ceil(currentResults.length / PAGE_SIZE));
         }
 
         function refreshSelection() {
-            const count = checkedBoxes().length;
-            selectedCountEl.textContent = count;
-            createSelectedBtn.disabled = count === 0;
+            selectedCountEl.textContent = selectedIndices.size;
+            createSelectedBtn.disabled = selectedIndices.size === 0;
+        }
+
+        function renderPage() {
+            resultsEl.innerHTML = '';
+            const start = currentPage * PAGE_SIZE;
+            currentResults.slice(start, start + PAGE_SIZE).forEach((book, offset) => {
+                const index = start + offset;
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex align-items-center gap-2';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input flex-shrink-0 m-0';
+                const created = createdIndices.has(index);
+                if (!book.isbn || created) {
+                    checkbox.disabled = true;
+                    checkbox.title = created ? 'Already created.' : 'No ISBN — cannot be bulk-created.';
+                }
+                checkbox.checked = selectedIndices.has(index) || created;
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) selectedIndices.add(index);
+                    else selectedIndices.delete(index);
+                    refreshSelection();
+                });
+
+                const label = document.createElement('button');
+                label.type = 'button';
+                label.className = 'btn btn-link text-start text-decoration-none p-0 flex-grow-1';
+                const author = book.author ? ' — ' + book.author : '';
+                const noIsbn = book.isbn ? '' : ' (no ISBN)';
+                label.textContent = book.title + author + noIsbn;
+                label.addEventListener('click', () => prefill(book));
+
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                resultsEl.appendChild(item);
+            });
+
+            const pages = totalPages();
+            pagerEl.classList.toggle('d-none', currentResults.length <= PAGE_SIZE);
+            pagerEl.classList.toggle('d-flex', currentResults.length > PAGE_SIZE);
+            pageInfoEl.textContent = 'Page ' + (currentPage + 1) + ' of ' + pages;
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage >= pages - 1;
+        }
+
+        function goToPage(page) {
+            currentPage = Math.min(Math.max(page, 0), totalPages() - 1);
+            renderPage();
         }
 
         async function search() {
             const q = queryEl.value.trim();
             resultsEl.innerHTML = '';
+            pagerEl.classList.add('d-none');
             currentResults = [];
+            selectedIndices = new Set();
+            createdIndices = new Set();
+            currentPage = 0;
             bulkStatusEl.textContent = '';
             refreshSelection();
             if (!q) { statusEl.textContent = 'Enter a search term.'; return; }
@@ -121,43 +186,18 @@
 
                 currentResults = books;
                 statusEl.textContent = books.length + ' result(s) — check books to create, or click a title to prefill the form.';
-                books.forEach((book, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item d-flex align-items-center gap-2';
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.className = 'form-check-input flex-shrink-0 m-0';
-                    checkbox.dataset.index = index;
-                    if (!book.isbn) {
-                        checkbox.disabled = true;
-                        checkbox.title = 'No ISBN — cannot be bulk-created.';
-                    }
-                    checkbox.addEventListener('change', refreshSelection);
-
-                    const label = document.createElement('button');
-                    label.type = 'button';
-                    label.className = 'btn btn-link text-start text-decoration-none p-0 flex-grow-1';
-                    const author = book.author ? ' — ' + book.author : '';
-                    const noIsbn = book.isbn ? '' : ' (no ISBN)';
-                    label.textContent = book.title + author + noIsbn;
-                    label.addEventListener('click', () => prefill(book));
-
-                    item.appendChild(checkbox);
-                    item.appendChild(label);
-                    resultsEl.appendChild(item);
-                });
+                renderPage();
             } catch {
                 statusEl.textContent = 'Search failed. Please try again.';
             }
         }
 
         async function createSelected() {
-            const boxes = checkedBoxes();
-            if (!boxes.length) return;
+            if (!selectedIndices.size) return;
 
-            const payload = boxes.map(box => {
-                const book = currentResults[box.dataset.index];
+            const indices = Array.from(selectedIndices);
+            const payload = indices.map(index => {
+                const book = currentResults[index];
                 return {
                     Title: book.title,
                     AuthorValue: book.author,
@@ -192,9 +232,11 @@
                 link.textContent = 'View books';
                 bulkStatusEl.append(link);
 
-                // Clear the created rows so they can't be submitted twice.
-                checkedBoxes().forEach(box => { box.checked = true; box.disabled = true; });
+                // Lock the created rows so they can't be submitted twice, then clear selection.
+                indices.forEach(index => createdIndices.add(index));
+                selectedIndices.clear();
                 refreshSelection();
+                renderPage();
             } catch {
                 bulkStatusEl.textContent = 'Create failed. Please try again.';
                 createSelectedBtn.disabled = false;
@@ -203,6 +245,8 @@
 
         document.getElementById('gb-search').addEventListener('click', search);
         createSelectedBtn.addEventListener('click', createSelected);
+        prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
+        nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
         queryEl.addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); search(); }
         });
