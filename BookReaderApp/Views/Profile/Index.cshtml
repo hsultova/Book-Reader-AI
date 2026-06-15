@@ -49,6 +49,38 @@
                 {
                     <a asp-action="Settings" class="btn btn-outline-primary mt-3">Edit profile</a>
                 }
+                else
+                {
+                    <div class="mt-3">
+                        @switch (Model.FriendState)
+                        {
+                            case BookReaderApp.Models.ViewModels.FriendState.None:
+                                <form asp-controller="Friends" asp-action="Send" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.UserId" />
+                                    <button type="submit" class="btn btn-primary">Add friend</button>
+                                </form>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.OutgoingPending:
+                                <button type="button" class="btn btn-outline-secondary" disabled>Request sent</button>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.IncomingPending:
+                                <form asp-controller="Friends" asp-action="Accept" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.PendingRequestId" />
+                                    <button type="submit" class="btn btn-success">Accept friend request</button>
+                                </form>
+                                <form asp-controller="Friends" asp-action="Reject" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.PendingRequestId" />
+                                    <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                </form>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.Friends:
+                                <button type="button" class="btn btn-outline-success" disabled>
+                                    <i class="bi bi-check-lg"></i> Friends
+                                </button>
+                                break;
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>

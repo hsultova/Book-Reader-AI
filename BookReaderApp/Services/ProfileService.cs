@@ -10,33 +10,53 @@ namespace BookReaderApp.Services;
 public class ProfileService : IProfileService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IFriendRequestService _friendRequests;
     private readonly ILogger<ProfileService> _logger;
 
     public ProfileService(
         UserManager<ApplicationUser> userManager,
+        IFriendRequestService friendRequests,
         ILogger<ProfileService> logger)
     {
         _userManager = userManager;
+        _friendRequests = friendRequests;
         _logger = logger;
     }
 
-    public async Task<ProfileViewModel?> GetProfileAsync(string userId, bool isOwnProfile)
+    public async Task<ProfileViewModel?> GetProfileAsync(string targetUserId, string currentUserId)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.FindByIdAsync(targetUserId);
         if (user is null)
         {
             return null;
         }
 
+        var isOwnProfile = targetUserId == currentUserId;
+
+        // Resolve the friend relationship only when viewing someone else.
+        var friendState = FriendState.None;
+        int? pendingRequestId = null;
+        if (!isOwnProfile)
+        {
+            friendState = await _friendRequests.GetRelationshipAsync(currentUserId, targetUserId);
+            if (friendState == FriendState.IncomingPending)
+            {
+                pendingRequestId = await _friendRequests.GetIncomingRequestIdAsync(currentUserId, targetUserId);
+            }
+        }
+
         return new ProfileViewModel
         {
+            UserId = user.Id,
             DisplayName = user.DisplayName,
             Bio = user.Bio,
             FavoriteGenre = user.FavoriteGenre,
             ReadingGoal = user.ReadingGoal,
             ProfilePicturePath = user.ProfilePicturePath,
             CreatedAt = user.CreatedAt,
-            IsOwnProfile = isOwnProfile
+            IsOwnProfile = isOwnProfile,
+            FriendState = friendState,
+            PendingRequestId = pendingRequestId
         };
     }
 

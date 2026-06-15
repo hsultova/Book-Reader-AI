@@ -7,7 +7,9 @@ namespace BookReaderApp.Services;
 // persistence is the controller's job, so this layer never touches IFormFile.
 public interface IProfileService
 {
-    Task<ProfileViewModel?> GetProfileAsync(string userId, bool isOwnProfile);
+    // Loads targetUserId's public profile as seen by currentUserId. Own-profile and
+    // friend-relationship state are resolved from the two ids.
+    Task<ProfileViewModel?> GetProfileAsync(string targetUserId, string currentUserId);
 
     Task<ProfileSettingsViewModel?> GetSettingsAsync(string userId);
 

@@ -60,7 +60,15 @@
             <div class="card mb-2">
                 <div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                        <span class="fw-semibold">@(review.User?.DisplayName ?? "Anonymous")</span>
+                        @if (review.User is not null)
+                        {
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@review.User.Id"
+                               class="fw-semibold text-decoration-none">@review.User.DisplayName</a>
+                        }
+                        else
+                        {
+                            <span class="fw-semibold">Anonymous</span>
+                        }
                         @if (isMine)
                         {
                             <span class="badge bg-secondary">You</span>
@@ -115,7 +123,15 @@
                                 var commentIsMine = isAuthenticated && comment.UserId == Model.CurrentUserId;
                                 <li class="mb-2">
                                     <div class="d-flex flex-wrap align-items-center gap-2">
-                                        <span class="fw-semibold small">@(comment.User?.DisplayName ?? "Anonymous")</span>
+                                        @if (comment.User is not null)
+                                        {
+                                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@comment.User.Id"
+                                               class="fw-semibold small text-decoration-none">@comment.User.DisplayName</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold small">Anonymous</span>
+                                        }
                                         <span class="small text-muted">@comment.CreatedAt.ToString("d MMM yyyy")</span>
                                         @if (commentIsMine)
                                         {

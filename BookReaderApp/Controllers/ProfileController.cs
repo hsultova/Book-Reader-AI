@@ -35,7 +35,7 @@ public class ProfileController : Controller
         var currentUserId = _userManager.GetUserId(User)!;
         var targetUserId = string.IsNullOrEmpty(id) ? currentUserId : id;
 
-        var profile = await _profileService.GetProfileAsync(targetUserId, isOwnProfile: targetUserId == currentUserId);
+        var profile = await _profileService.GetProfileAsync(targetUserId, currentUserId);
         if (profile is null)
         {
             return NotFound();

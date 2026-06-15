@@ -27,6 +27,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ReviewComment> ReviewComments => Set<ReviewComment>();
 
+    public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -122,6 +124,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<FriendRequest>(entity =>
+        {
+            // Both sides Restrict: two cascade paths to AspNetUsers would trip
+            // SQL Server (same reason as ReviewLike/ReviewComment above).
+            entity.HasOne(f => f.Requester)
+                .WithMany()
+                .HasForeignKey(f => f.RequesterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(f => f.Addressee)
+                .WithMany()
+                .HasForeignKey(f => f.AddresseeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // At most one request per ordered pair.
+            entity.HasIndex(f => new { f.RequesterId, f.AddresseeId }).IsUnique();
         });
     }
 }

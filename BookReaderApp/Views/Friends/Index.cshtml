@@ -1,0 +1,111 @@
+@model BookReaderApp.Models.ViewModels.FriendsViewModel
+@{
+    ViewData["Title"] = "Friends";
+}
+
+@functions {
+    // Avatar markup shared by every list row (mirrors the profile/nav pattern).
+    static string Initial(string name) =>
+        string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[0].ToString().ToUpper();
+}
+
+<h1 class="h3 mb-4">Friends</h1>
+
+<section class="mb-5">
+    <h2 class="h5 mb-3">My friends</h2>
+    @if (Model.Friends.Count == 0)
+    {
+        <p class="text-muted">You haven't added any friends yet.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var friend in Model.Friends)
+            {
+                <li class="list-group-item d-flex align-items-center gap-3">
+                    @if (!string.IsNullOrEmpty(friend.ProfilePicturePath))
+                    {
+                        <img src="@friend.ProfilePicturePath" alt="@friend.DisplayName"
+                             class="rounded-circle object-fit-cover" width="40" height="40" />
+                    }
+                    else
+                    {
+                        <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center"
+                              style="width:40px;height:40px;">@Initial(friend.DisplayName)</span>
+                    }
+                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.UserId"
+                       class="text-decoration-none">@friend.DisplayName</a>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+<section class="mb-5">
+    <h2 class="h5 mb-3">Requests received</h2>
+    @if (Model.IncomingRequests.Count == 0)
+    {
+        <p class="text-muted">No pending requests.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var req in Model.IncomingRequests)
+            {
+                <li class="list-group-item d-flex align-items-center gap-3">
+                    @if (!string.IsNullOrEmpty(req.ProfilePicturePath))
+                    {
+                        <img src="@req.ProfilePicturePath" alt="@req.DisplayName"
+                             class="rounded-circle object-fit-cover" width="40" height="40" />
+                    }
+                    else
+                    {
+                        <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center"
+                              style="width:40px;height:40px;">@Initial(req.DisplayName)</span>
+                    }
+                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@req.UserId"
+                       class="text-decoration-none me-auto">@req.DisplayName</a>
+                    <form asp-controller="Friends" asp-action="Accept" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@req.RequestId" />
+                        <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                    </form>
+                    <form asp-controller="Friends" asp-action="Reject" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@req.RequestId" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                    </form>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+<section>
+    <h2 class="h5 mb-3">Requests sent</h2>
+    @if (Model.OutgoingRequests.Count == 0)
+    {
+        <p class="text-muted">You have no pending sent requests.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var req in Model.OutgoingRequests)
+            {
+                <li class="list-group-item d-flex align-items-center gap-3">
+                    @if (!string.IsNullOrEmpty(req.ProfilePicturePath))
+                    {
+                        <img src="@req.ProfilePicturePath" alt="@req.DisplayName"
+                             class="rounded-circle object-fit-cover" width="40" height="40" />
+                    }
+                    else
+                    {
+                        <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center"
+                              style="width:40px;height:40px;">@Initial(req.DisplayName)</span>
+                    }
+                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@req.UserId"
+                       class="text-decoration-none me-auto">@req.DisplayName</a>
+                    <span class="badge bg-secondary">Pending</span>
+                </li>
+            }
+        </ul>
+    }
+</section>
