@@ -82,6 +82,7 @@ public class UserBookService : IUserBookService
 
         // 0 clears the rating; 1–5 sets it.
         int? value = rating == 0 ? null : rating;
+        DateTime? ratedAt = value is null ? null : DateTime.UtcNow;
 
         var existing = await _userBooks.GetForUserAndBookAsync(userId, bookId);
         if (existing is null)
@@ -92,12 +93,14 @@ public class UserBookService : IUserBookService
                 BookId = bookId,
                 Status = ReadingStatus.WantToRead,
                 Rating = value,
+                RatedAt = ratedAt,
                 AddedAt = DateTime.UtcNow,
             });
         }
         else
         {
             existing.Rating = value;
+            existing.RatedAt = ratedAt;
             _userBooks.Update(existing);
         }
 

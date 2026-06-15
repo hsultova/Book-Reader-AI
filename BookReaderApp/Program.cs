@@ -75,6 +75,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IReviewLikeService, ReviewLikeService>();
 builder.Services.AddScoped<IReviewCommentService, ReviewCommentService>();
 builder.Services.AddScoped<IFriendRequestService, FriendRequestService>();
+builder.Services.AddScoped<IUpdatesService, UpdatesService>();
 
 // Google Books integration. Options bind the (backend-only) API key; the typed HttpClient
 // is the only path to Google — the key is attached server-side and never reaches the browser.

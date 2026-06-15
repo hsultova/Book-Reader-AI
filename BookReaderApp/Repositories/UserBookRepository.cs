@@ -27,6 +27,27 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
     public async Task<IReadOnlyList<UserBook>> GetForShelfAsync(string userId, int shelfId) =>
         await Set.Where(ub => ub.UserId == userId && ub.ShelfId == shelfId).ToListAsync();
 
+    public async Task<IReadOnlyList<UserBook>> GetRecentShelfAddsForUsersAsync(
+        IReadOnlyCollection<string> userIds, int take) =>
+        await Set
+            .Include(ub => ub.User)
+            .Include(ub => ub.Book)
+            .Include(ub => ub.Shelf)
+            .Where(ub => userIds.Contains(ub.UserId))
+            .OrderByDescending(ub => ub.AddedAt)
+            .Take(take)
+            .ToListAsync();
+
+    public async Task<IReadOnlyList<UserBook>> GetRecentRatingsForUsersAsync(
+        IReadOnlyCollection<string> userIds, int take) =>
+        await Set
+            .Include(ub => ub.User)
+            .Include(ub => ub.Book)
+            .Where(ub => ub.Rating != null && ub.RatedAt != null && userIds.Contains(ub.UserId))
+            .OrderByDescending(ub => ub.RatedAt)
+            .Take(take)
+            .ToListAsync();
+
     public async Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(
         IEnumerable<int> bookIds)
     {

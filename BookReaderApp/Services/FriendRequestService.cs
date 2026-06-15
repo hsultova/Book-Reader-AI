@@ -129,6 +129,16 @@ public class FriendRequestService : IFriendRequestService
         _logger.LogInformation("Friend request {RequestId} {Status} by {User}.", requestId, status, currentUserId);
     }
 
+    public async Task<IReadOnlyList<string>> GetFriendIdsAsync(string currentUserId)
+    {
+        var accepted = await _requests.GetAcceptedForUserAsync(currentUserId);
+
+        // The friend is whichever side of the accepted row isn't the current user.
+        return accepted
+            .Select(f => f.RequesterId == currentUserId ? f.AddresseeId : f.RequesterId)
+            .ToList();
+    }
+
     public async Task<FriendsViewModel> GetFriendsPageAsync(string currentUserId, string? searchQuery = null)
     {
         var accepted = await _requests.GetAcceptedForUserAsync(currentUserId);

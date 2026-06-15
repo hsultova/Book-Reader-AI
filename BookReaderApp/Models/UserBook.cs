@@ -26,5 +26,9 @@ public class UserBook
     // placement: a book can be rated on any shelf (or none of the built-in statuses).
     public int? Rating { get; set; }
 
+    // When the current Rating was last set, or null when unrated. Distinct from AddedAt
+    // so the activity feed can place a rating at the moment it happened, not the shelf add.
+    public DateTime? RatedAt { get; set; }
+
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 }

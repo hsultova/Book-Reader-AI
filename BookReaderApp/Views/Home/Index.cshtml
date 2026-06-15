@@ -1,8 +1,107 @@
-﻿@{
+@using BookReaderApp.Models.ViewModels
+@model HomeViewModel?
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@functions {
+    // Avatar fallback initial (mirrors the Friends/profile/nav pattern).
+    static string Initial(string name) =>
+        string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[0].ToString().ToUpper();
+
+    // Compact "x ago" rendering of a UTC timestamp.
+    static string Ago(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span < TimeSpan.FromMinutes(1)) return "just now";
+        if (span < TimeSpan.FromHours(1)) return $"{(int)span.TotalMinutes}m ago";
+        if (span < TimeSpan.FromDays(1)) return $"{(int)span.TotalHours}h ago";
+        if (span < TimeSpan.FromDays(30)) return $"{(int)span.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("MMM d, yyyy");
+    }
+}
+
+@if (Model is null)
+{
+    <div class="text-center py-5">
+        <h1 class="display-5 mb-3">Welcome to Book Reader</h1>
+        <p class="lead text-muted mb-4">
+            Sign in to follow your friends' reviews, ratings and reading activity right here.
+        </p>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-primary me-2">Sign in</a>
+        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary">Create account</a>
+    </div>
+}
+else
+{
+    <h1 class="h3 mb-4">Updates</h1>
+
+    @if (Model.Updates.Count == 0)
+    {
+        <p class="text-muted">No recent activity from your friends yet.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var update in Model.Updates)
+            {
+                <li class="list-group-item d-flex align-items-start gap-3">
+                    @if (!string.IsNullOrEmpty(update.FriendProfilePicturePath))
+                    {
+                        <img src="@update.FriendProfilePicturePath" alt="@update.FriendDisplayName"
+                             class="rounded-circle object-fit-cover flex-shrink-0" width="40" height="40" />
+                    }
+                    else
+                    {
+                        <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:40px;height:40px;">@Initial(update.FriendDisplayName)</span>
+                    }
+
+                    <div class="flex-grow-1">
+                        <div>
+                            <span class="fw-semibold">@update.FriendDisplayName</span>
+                            @switch (update.Kind)
+                            {
+                                case UpdateKind.Review:
+                                    <text>reviewed</text>
+                                    break;
+                                case UpdateKind.ShelfAdd:
+                                    <text>added</text>
+                                    break;
+                                case UpdateKind.Rating:
+                                    <text>rated</text>
+                                    break;
+                            }
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@update.BookId"
+                               class="text-decoration-none">@update.BookTitle</a>
+                            @if (update.Kind == UpdateKind.ShelfAdd)
+                            {
+                                <text>to <span class="fw-semibold">@update.ShelfLabel</span></text>
+                            }
+                            <span class="text-muted small ms-1">· @Ago(update.Timestamp)</span>
+                        </div>
+
+                        @if (update.Kind == UpdateKind.Rating && update.Rating is int stars)
+                        {
+                            <div class="text-warning" aria-label="@stars out of 5 stars">
+                                @(new string('★', stars))<span class="text-muted">@(new string('☆', 5 - stars))</span>
+                            </div>
+                        }
+
+                        @if (update.Kind == UpdateKind.Review && !string.IsNullOrWhiteSpace(update.ReviewSnippet))
+                        {
+                            @if (update.ContainsSpoilers)
+                            {
+                                <div class="text-muted fst-italic small">Contains spoilers — open the book to read.</div>
+                            }
+                            else
+                            {
+                                <div class="text-muted small">@update.ReviewSnippet</div>
+                            }
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+}
