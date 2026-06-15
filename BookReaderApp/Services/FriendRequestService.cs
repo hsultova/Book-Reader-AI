@@ -1,19 +1,27 @@
 using BookReaderApp.Models;
 using BookReaderApp.Models.ViewModels;
 using BookReaderApp.Repositories;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookReaderApp.Services;
 
 public class FriendRequestService : IFriendRequestService
 {
+    // Cap directory search results so a broad term can't return the whole user base.
+    private const int MaxSearchResults = 20;
+
     private readonly IFriendRequestRepository _requests;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<FriendRequestService> _logger;
 
     public FriendRequestService(
         IFriendRequestRepository requests,
+        UserManager<ApplicationUser> userManager,
         ILogger<FriendRequestService> logger)
     {
         _requests = requests;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -105,20 +113,26 @@ public class FriendRequestService : IFriendRequestService
         _logger.LogInformation("Friend request {RequestId} {Status} by {User}.", requestId, status, currentUserId);
     }
 
-    public async Task<FriendsViewModel> GetFriendsPageAsync(string currentUserId)
+    public async Task<FriendsViewModel> GetFriendsPageAsync(string currentUserId, string? searchQuery = null)
     {
         var accepted = await _requests.GetAcceptedForUserAsync(currentUserId);
         var incoming = await _requests.GetIncomingPendingAsync(currentUserId);
         var outgoing = await _requests.GetOutgoingPendingAsync(currentUserId);
 
+        // The friend is whichever side of the accepted row isn't the current user.
+        var friends = accepted
+            .Select(f => f.RequesterId == currentUserId
+                ? ToItem(f.Addressee, requestId: null)
+                : ToItem(f.Requester, requestId: null))
+            .ToList();
+
+        var searchResults = await SearchUsersAsync(currentUserId, searchQuery);
+
         return new FriendsViewModel
         {
-            // The friend is whichever side of the accepted row isn't the current user.
-            Friends = accepted
-                .Select(f => f.RequesterId == currentUserId
-                    ? ToItem(f.Addressee, requestId: null)
-                    : ToItem(f.Requester, requestId: null))
-                .ToList(),
+            SearchQuery = searchQuery,
+            SearchResults = searchResults,
+            Friends = friends,
             IncomingRequests = incoming
                 .Select(f => ToItem(f.Requester, f.Id))
                 .ToList(),
@@ -126,6 +140,40 @@ public class FriendRequestService : IFriendRequestService
                 .Select(f => ToItem(f.Addressee, f.Id))
                 .ToList()
         };
+    }
+
+    // Finds registered users (other than the viewer) whose display name matches the term,
+    // annotating each with the relationship so the right action button can render.
+    private async Task<IReadOnlyList<FriendSearchResultItem>> SearchUsersAsync(
+        string currentUserId, string? searchQuery)
+    {
+        var term = searchQuery?.Trim();
+        if (string.IsNullOrEmpty(term))
+        {
+            return [];
+        }
+
+        // ToLower keeps the LIKE translatable and case-insensitive across providers.
+        var lowered = term.ToLower();
+        var matches = await _userManager.Users
+            .Where(u => u.Id != currentUserId && u.DisplayName.ToLower().Contains(lowered))
+            .OrderBy(u => u.DisplayName)
+            .Take(MaxSearchResults)
+            .ToListAsync();
+
+        var results = new List<FriendSearchResultItem>(matches.Count);
+        foreach (var user in matches)
+        {
+            var state = await GetRelationshipAsync(currentUserId, user.Id);
+            var requestId = state == FriendState.IncomingPending
+                ? await GetIncomingRequestIdAsync(currentUserId, user.Id)
+                : null;
+
+            results.Add(new FriendSearchResultItem(
+                user.Id, user.DisplayName, user.ProfilePicturePath, state, requestId));
+        }
+
+        return results;
     }
 
     private static FriendListItem ToItem(ApplicationUser? user, int? requestId) =>

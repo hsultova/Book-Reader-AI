@@ -12,6 +12,77 @@
 <h1 class="h3 mb-4">Friends</h1>
 
 <section class="mb-5">
+    <h2 class="h5 mb-3">Find people</h2>
+
+    <form asp-action="Index" method="get" class="mb-3" role="search">
+        <div class="input-group">
+            <input type="search" name="q" value="@Model.SearchQuery" class="form-control"
+                   placeholder="Search all users by name" aria-label="Search users" />
+            <button type="submit" class="btn btn-outline-primary">Search</button>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            }
+        </div>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
+    {
+        @if (Model.SearchResults.Count == 0)
+        {
+            <p class="text-muted">No users match &ldquo;@Model.SearchQuery&rdquo;.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var user in Model.SearchResults)
+                {
+                    <li class="list-group-item d-flex align-items-center gap-3">
+                        @if (!string.IsNullOrEmpty(user.ProfilePicturePath))
+                        {
+                            <img src="@user.ProfilePicturePath" alt="@user.DisplayName"
+                                 class="rounded-circle object-fit-cover" width="40" height="40" />
+                        }
+                        else
+                        {
+                            <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center"
+                                  style="width:40px;height:40px;">@Initial(user.DisplayName)</span>
+                        }
+                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@user.UserId"
+                           class="text-decoration-none me-auto">@user.DisplayName</a>
+                        @switch (user.State)
+                        {
+                            case BookReaderApp.Models.ViewModels.FriendState.None:
+                                <form asp-controller="Friends" asp-action="Send" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.UserId" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Add friend</button>
+                                </form>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.OutgoingPending:
+                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Request sent</button>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.IncomingPending:
+                                <form asp-controller="Friends" asp-action="Accept" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.RequestId" />
+                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                </form>
+                                <form asp-controller="Friends" asp-action="Reject" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.RequestId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
+                                break;
+                            case BookReaderApp.Models.ViewModels.FriendState.Friends:
+                                <span class="badge bg-success">Friends</span>
+                                break;
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+</section>
+
+<section class="mb-5">
     <h2 class="h5 mb-3">My friends</h2>
     @if (Model.Friends.Count == 0)
     {

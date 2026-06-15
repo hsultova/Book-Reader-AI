@@ -21,11 +21,12 @@ public class FriendsController : Controller
     }
 
     // The current user's friends and pending requests (both directions).
+    // Optional q filters the friends list by display name.
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? q)
     {
         var userId = _userManager.GetUserId(User)!;
-        var model = await _friendRequests.GetFriendsPageAsync(userId);
+        var model = await _friendRequests.GetFriendsPageAsync(userId, q);
         return View(model);
     }
 

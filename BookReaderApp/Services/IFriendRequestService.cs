@@ -24,5 +24,7 @@ public interface IFriendRequestService
     Task RejectAsync(int requestId, string currentUserId);
 
     // Builds the Friends page (friends + incoming + outgoing pending requests).
-    Task<FriendsViewModel> GetFriendsPageAsync(string currentUserId);
+    // When searchQuery is set, also returns matching registered users (with their
+    // relationship state) so new friend requests can be sent from the results.
+    Task<FriendsViewModel> GetFriendsPageAsync(string currentUserId, string? searchQuery = null);
 }

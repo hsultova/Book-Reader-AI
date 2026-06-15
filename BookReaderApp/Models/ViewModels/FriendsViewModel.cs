@@ -18,9 +18,26 @@ public record FriendListItem(
     string? ProfilePicturePath,
     int? RequestId);
 
-// The Friends page: established friends plus pending requests in both directions.
+// A registered user matching a directory search, with the relationship to the viewer
+// so the right action (Add friend / Request sent / Accept-Reject / Friends) can render.
+// RequestId is set only when the viewer has an incoming pending request from this user.
+public record FriendSearchResultItem(
+    string UserId,
+    string DisplayName,
+    string? ProfilePicturePath,
+    FriendState State,
+    int? RequestId);
+
+// The Friends page: established friends plus pending requests in both directions, and
+// (when a search is active) matching registered users to send new requests to.
 public class FriendsViewModel
 {
+    // The active free-text search term across registered users, if any.
+    public string? SearchQuery { get; init; }
+
+    // Registered users matching SearchQuery (empty when no search is active).
+    public IReadOnlyList<FriendSearchResultItem> SearchResults { get; init; } = [];
+
     public IReadOnlyList<FriendListItem> Friends { get; init; } = [];
 
     public IReadOnlyList<FriendListItem> IncomingRequests { get; init; } = [];
