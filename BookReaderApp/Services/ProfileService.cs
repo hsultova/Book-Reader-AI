@@ -11,15 +11,18 @@ public class ProfileService : IProfileService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IFriendRequestService _friendRequests;
+    private readonly IFollowService _follows;
     private readonly ILogger<ProfileService> _logger;
 
     public ProfileService(
         UserManager<ApplicationUser> userManager,
         IFriendRequestService friendRequests,
+        IFollowService follows,
         ILogger<ProfileService> logger)
     {
         _userManager = userManager;
         _friendRequests = friendRequests;
+        _follows = follows;
         _logger = logger;
     }
 
@@ -33,9 +36,10 @@ public class ProfileService : IProfileService
 
         var isOwnProfile = targetUserId == currentUserId;
 
-        // Resolve the friend relationship only when viewing someone else.
+        // Resolve the friend and follow relationships only when viewing someone else.
         var friendState = FriendState.None;
         int? pendingRequestId = null;
+        var isFollowing = false;
         if (!isOwnProfile)
         {
             friendState = await _friendRequests.GetRelationshipAsync(currentUserId, targetUserId);
@@ -43,6 +47,8 @@ public class ProfileService : IProfileService
             {
                 pendingRequestId = await _friendRequests.GetIncomingRequestIdAsync(currentUserId, targetUserId);
             }
+
+            isFollowing = await _follows.IsFollowingAsync(currentUserId, targetUserId);
         }
 
         return new ProfileViewModel
@@ -56,7 +62,8 @@ public class ProfileService : IProfileService
             CreatedAt = user.CreatedAt,
             IsOwnProfile = isOwnProfile,
             FriendState = friendState,
-            PendingRequestId = pendingRequestId
+            PendingRequestId = pendingRequestId,
+            IsFollowing = isFollowing
         };
     }
 

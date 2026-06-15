@@ -28,4 +28,8 @@ public class ProfileViewModel
     // The pending request id when the viewer has received a request from this user
     // (so the profile can render Accept/Reject). Null otherwise.
     public int? PendingRequestId { get; set; }
+
+    // Whether the viewer follows this user; drives the Follow/Unfollow button. Only
+    // meaningful when IsOwnProfile is false.
+    public bool IsFollowing { get; set; }
 }

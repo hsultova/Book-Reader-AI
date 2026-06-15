@@ -10,32 +10,42 @@ public class UpdatesService : IUpdatesService
     private const int SnippetLength = 160;
 
     private readonly IFriendRequestService _friends;
+    private readonly IFollowService _follows;
     private readonly IReviewRepository _reviews;
     private readonly IUserBookRepository _userBooks;
 
     public UpdatesService(
         IFriendRequestService friends,
+        IFollowService follows,
         IReviewRepository reviews,
         IUserBookRepository userBooks)
     {
         _friends = friends;
+        _follows = follows;
         _reviews = reviews;
         _userBooks = userBooks;
     }
 
     public async Task<IReadOnlyList<UpdateItem>> GetFeedAsync(string currentUserId, int take = 20)
     {
+        // The feed covers both accepted friends and followed users.
         var friendIds = await _friends.GetFriendIdsAsync(currentUserId);
-        if (friendIds.Count == 0)
+        var followeeIds = await _follows.GetFolloweeIdsAsync(currentUserId);
+        var sourceIds = friendIds
+            .Concat(followeeIds)
+            .Where(id => id != currentUserId)
+            .Distinct()
+            .ToList();
+        if (sourceIds.Count == 0)
         {
             return [];
         }
 
         // Pull the latest `take` of each activity type, then merge: the global newest `take`
         // can't include anything older than the oldest of any single type's top `take`.
-        var reviews = await _reviews.GetRecentForUsersAsync(friendIds, take);
-        var shelfAdds = await _userBooks.GetRecentShelfAddsForUsersAsync(friendIds, take);
-        var ratings = await _userBooks.GetRecentRatingsForUsersAsync(friendIds, take);
+        var reviews = await _reviews.GetRecentForUsersAsync(sourceIds, take);
+        var shelfAdds = await _userBooks.GetRecentShelfAddsForUsersAsync(sourceIds, take);
+        var ratings = await _userBooks.GetRecentRatingsForUsersAsync(sourceIds, take);
 
         return reviews.Select(ToReviewItem)
             .Concat(shelfAdds.Select(ToShelfAddItem))

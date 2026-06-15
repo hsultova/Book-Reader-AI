@@ -40,6 +40,9 @@ public class FriendsViewModel
 
     public IReadOnlyList<FriendListItem> Friends { get; init; } = [];
 
+    // Everyone the current user follows (one-way). RequestId is unused here.
+    public IReadOnlyList<FriendListItem> Following { get; init; } = [];
+
     public IReadOnlyList<FriendListItem> IncomingRequests { get; init; } = [];
 
     public IReadOnlyList<FriendListItem> OutgoingRequests { get; init; } = [];

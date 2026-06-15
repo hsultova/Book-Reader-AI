@@ -12,15 +12,18 @@ public class FriendRequestService : IFriendRequestService
     private const int MaxSearchResults = 20;
 
     private readonly IFriendRequestRepository _requests;
+    private readonly IFollowService _follows;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<FriendRequestService> _logger;
 
     public FriendRequestService(
         IFriendRequestRepository requests,
+        IFollowService follows,
         UserManager<ApplicationUser> userManager,
         ILogger<FriendRequestService> logger)
     {
         _requests = requests;
+        _follows = follows;
         _userManager = userManager;
         _logger = logger;
     }
@@ -70,6 +73,9 @@ public class FriendRequestService : IFriendRequestService
             });
             await _requests.SaveChangesAsync();
             _logger.LogInformation("Friend request sent from {Requester} to {Addressee}.", requesterId, addresseeId);
+
+            // Sending a request also follows the addressee (idempotent).
+            await _follows.FollowAsync(requesterId, addresseeId);
             return;
         }
 
@@ -88,6 +94,9 @@ public class FriendRequestService : IFriendRequestService
         _requests.Update(existing);
         await _requests.SaveChangesAsync();
         _logger.LogInformation("Friend request re-sent from {Requester} to {Addressee}.", requesterId, addresseeId);
+
+        // Sending a request also follows the addressee (idempotent).
+        await _follows.FollowAsync(requesterId, addresseeId);
     }
 
     public async Task AcceptAsync(int requestId, string currentUserId) =>
@@ -110,6 +119,24 @@ public class FriendRequestService : IFriendRequestService
         _requests.Remove(request);
         await _requests.SaveChangesAsync();
         _logger.LogInformation("Friend request {RequestId} cancelled by {User}.", requestId, currentUserId);
+    }
+
+    public async Task RemoveFriendAsync(string currentUserId, string otherUserId)
+    {
+        var existing = await _requests.GetBetweenAsync(currentUserId, otherUserId);
+
+        // Only an established friendship the current user is part of can be removed.
+        if (existing is null || existing.Status != FriendRequestStatus.Accepted)
+        {
+            return;
+        }
+
+        // Delete the row outright so the pair can re-friend later (mirrors CancelAsync).
+        // Any follow between them is intentionally left intact.
+        _requests.Remove(existing);
+        await _requests.SaveChangesAsync();
+        _logger.LogInformation("Friendship between {User} and {Other} removed by {User}.",
+            currentUserId, otherUserId, currentUserId);
     }
 
     private async Task RespondAsync(int requestId, string currentUserId, FriendRequestStatus status)
@@ -152,6 +179,11 @@ public class FriendRequestService : IFriendRequestService
                 : ToItem(f.Requester, requestId: null))
             .ToList();
 
+        var followees = await _follows.GetFolloweesAsync(currentUserId);
+        var following = followees
+            .Select(u => ToItem(u, requestId: null))
+            .ToList();
+
         var searchResults = await SearchUsersAsync(currentUserId, searchQuery);
 
         return new FriendsViewModel
@@ -159,6 +191,7 @@ public class FriendRequestService : IFriendRequestService
             SearchQuery = searchQuery,
             SearchResults = searchResults,
             Friends = friends,
+            Following = following,
             IncomingRequests = incoming
                 .Select(f => ToItem(f.Requester, f.Id))
                 .ToList(),

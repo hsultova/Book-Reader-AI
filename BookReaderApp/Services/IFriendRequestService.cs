@@ -26,6 +26,10 @@ public interface IFriendRequestService
     // Cancels (deletes) a pending request the current user sent. Only the requester may cancel.
     Task CancelAsync(int requestId, string currentUserId);
 
+    // Removes an accepted friendship between the two users. Either participant may remove it.
+    // No-op if they are not friends. Any follow between them is left intact.
+    Task RemoveFriendAsync(string currentUserId, string otherUserId);
+
     // The user ids of everyone the current user is accepted friends with.
     Task<IReadOnlyList<string>> GetFriendIdsAsync(string currentUserId);
 

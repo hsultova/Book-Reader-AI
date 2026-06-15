@@ -74,6 +74,8 @@ builder.Services.AddScoped<IReviewLikeRepository, ReviewLikeRepository>();
 builder.Services.AddScoped<IReviewCommentRepository, ReviewCommentRepository>();
 builder.Services.AddScoped<IFriendRequestRepository, FriendRequestRepository>();
 builder.Services.AddScoped<IRepository<FriendRequest>>(sp => sp.GetRequiredService<IFriendRequestRepository>());
+builder.Services.AddScoped<IFollowRepository, FollowRepository>();
+builder.Services.AddScoped<IRepository<Follow>>(sp => sp.GetRequiredService<IFollowRepository>());
 
 // Business-logic layer. Scoped to match the Identity managers / DbContext it depends on.
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -87,6 +89,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IReviewLikeService, ReviewLikeService>();
 builder.Services.AddScoped<IReviewCommentService, ReviewCommentService>();
 builder.Services.AddScoped<IFriendRequestService, FriendRequestService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IUpdatesService, UpdatesService>();
 
 // Messaging module. Repositories + service live in the BookReaderApp.Messaging class

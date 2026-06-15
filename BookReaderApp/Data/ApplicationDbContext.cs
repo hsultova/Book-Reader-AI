@@ -29,6 +29,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
 
+    public DbSet<Follow> Follows => Set<Follow>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -142,6 +144,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // At most one request per ordered pair.
             entity.HasIndex(f => new { f.RequesterId, f.AddresseeId }).IsUnique();
+        });
+
+        builder.Entity<Follow>(entity =>
+        {
+            // Both sides Restrict: two cascade paths to AspNetUsers would trip
+            // SQL Server (same reason as FriendRequest above).
+            entity.HasOne(f => f.Follower)
+                .WithMany()
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(f => f.Followee)
+                .WithMany()
+                .HasForeignKey(f => f.FolloweeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // At most one follow per ordered pair.
+            entity.HasIndex(f => new { f.FollowerId, f.FolloweeId }).IsUnique();
         });
     }
 }

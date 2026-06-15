@@ -67,4 +67,18 @@ public class FriendsController : Controller
         await _friendRequests.CancelAsync(id, userId);
         return RedirectToAction(nameof(Index));
     }
+
+    // Remove an established friendship with user `id`, then return to their profile.
+    [HttpPost]
+    public async Task<IActionResult> Unfriend(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return BadRequest();
+        }
+
+        var userId = _userManager.GetUserId(User)!;
+        await _friendRequests.RemoveFriendAsync(userId, id);
+        return RedirectToAction("Index", "Profile", new { id });
+    }
 }
