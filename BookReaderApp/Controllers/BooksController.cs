@@ -18,6 +18,7 @@ public class BooksController : Controller
     private readonly IGoogleBooksService _googleBooksService;
     private readonly IUserBookService _userBookService;
     private readonly IShelfService _shelfService;
+    private readonly IReviewService _reviewService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public BooksController(
@@ -27,6 +28,7 @@ public class BooksController : Controller
         IGoogleBooksService googleBooksService,
         IUserBookService userBookService,
         IShelfService shelfService,
+        IReviewService reviewService,
         UserManager<ApplicationUser> userManager)
     {
         _bookService = bookService;
@@ -35,6 +37,7 @@ public class BooksController : Controller
         _googleBooksService = googleBooksService;
         _userBookService = userBookService;
         _shelfService = shelfService;
+        _reviewService = reviewService;
         _userManager = userManager;
     }
 
@@ -59,6 +62,16 @@ public class BooksController : Controller
         }
 
         await PopulateShelfStatusesAsync(new[] { book.Id });
+
+        // Reviews are shown to everyone; the user's own review (if any) prefills the edit form.
+        ViewData["BookReviews"] = await _reviewService.GetForBookAsync(book.Id);
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            ViewData["CurrentUserId"] = userId;
+            ViewData["UserReview"] = await _reviewService.GetUserReviewAsync(userId, book.Id);
+        }
+
         return View(book);
     }
 

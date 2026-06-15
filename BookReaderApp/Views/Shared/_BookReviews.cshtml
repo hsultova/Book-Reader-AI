@@ -1,0 +1,82 @@
+@model BookReaderApp.Models.ViewModels.BookReviewsViewModel
+
+<section class="book-reviews mt-4">
+    <h2 class="h5">Reviews</h2>
+
+    @* The signed-in user's write/edit form, only for books on their shelf. *@
+    @if (Model.CanReview)
+    {
+        var editing = Model.UserReview is not null;
+        <div class="card mb-3">
+            <div class="card-body">
+                <form asp-controller="Reviews" asp-action="Save" method="post" class="m-0">
+                    <input type="hidden" name="bookId" value="@Model.BookId" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <label class="form-label fw-semibold" for="review-text">
+                        @(editing ? "Edit your review" : "Write a review")
+                    </label>
+                    <textarea id="review-text" name="text" class="form-control" rows="4"
+                              placeholder="Share your thoughts about this book…" required>@Model.UserReview?.Text</textarea>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="containsSpoilers" value="true"
+                               id="review-spoilers" @(Model.UserReview?.ContainsSpoilers == true ? "checked" : "") />
+                        <label class="form-check-label" for="review-spoilers">Contains spoilers</label>
+                    </div>
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            @(editing ? "Update review" : "Post review")
+                        </button>
+                    </div>
+                </form>
+                @if (editing)
+                {
+                    <form asp-controller="Reviews" asp-action="Delete" method="post" class="mt-2">
+                        <input type="hidden" name="bookId" value="@Model.BookId" />
+                        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete review</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+
+    @* Community reviews, shown to everyone. *@
+    @if (Model.Reviews.Count == 0)
+    {
+        <p class="text-muted">No reviews yet.</p>
+    }
+    else
+    {
+        foreach (var review in Model.Reviews)
+        {
+            var isMine = Model.CurrentUserId is not null && review.UserId == Model.CurrentUserId;
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="fw-semibold">@(review.User?.DisplayName ?? "Anonymous")</span>
+                        @if (isMine)
+                        {
+                            <span class="badge bg-secondary">You</span>
+                        }
+                        @if (review.ContainsSpoilers)
+                        {
+                            <span class="badge bg-warning text-dark">Spoiler</span>
+                        }
+                        <span class="small text-muted ms-auto">@review.CreatedAt.ToString("d MMM yyyy")</span>
+                    </div>
+                    @if (review.ContainsSpoilers)
+                    {
+                        <details>
+                            <summary class="text-muted" style="cursor: pointer;">Spoiler — click to reveal</summary>
+                            <p class="mb-0 mt-2" style="white-space: pre-wrap;">@review.Text</p>
+                        </details>
+                    }
+                    else
+                    {
+                        <p class="mb-0" style="white-space: pre-wrap;">@review.Text</p>
+                    }
+                </div>
+            </div>
+        }
+    }
+</section>

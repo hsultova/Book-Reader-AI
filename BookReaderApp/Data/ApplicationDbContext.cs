@@ -21,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Shelf> Shelves => Set<Shelf>();
 
+    public DbSet<Review> Reviews => Set<Review>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -68,6 +70,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Shelf names are unique per user.
             entity.HasIndex(s => new { s.UserId, s.Name }).IsUnique();
+        });
+
+        builder.Entity<Review>(entity =>
+        {
+            entity.HasOne(r => r.Book)
+                .WithMany()
+                .HasForeignKey(r => r.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // A user can review a given book only once.
+            entity.HasIndex(r => new { r.UserId, r.BookId }).IsUnique();
         });
     }
 }

@@ -15,6 +15,10 @@
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var placement = shelfPlacements.TryGetValue(Model.Id, out var ub) ? ub : null;
     var ratingSummary = ratingSummaries.TryGetValue(Model.Id, out var rs) ? rs : null;
+    var bookReviews = ViewData["BookReviews"] as IReadOnlyList<Review>
+        ?? Array.Empty<Review>();
+    var userReview = ViewData["UserReview"] as Review;
+    var currentUserId = ViewData["CurrentUserId"] as string;
 }
 
 <div class="row">
@@ -59,5 +63,11 @@
                 <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
             }
         </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <partial name="_BookReviews" model="@(new BookReviewsViewModel { BookId = Model.Id, Reviews = bookReviews, UserReview = userReview, CanReview = isAuthenticated && placement is not null, CurrentUserId = currentUserId, ReturnUrl = returnUrl })" />
     </div>
 </div>

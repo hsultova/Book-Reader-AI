@@ -57,6 +57,7 @@ builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IUserBookRepository, UserBookRepository>();
 builder.Services.AddScoped<IShelfRepository, ShelfRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 // Business-logic layer. Scoped to match the Identity managers / DbContext it depends on.
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IUserBookService, UserBookService>();
 builder.Services.AddScoped<IShelfService, ShelfService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 // Google Books integration. Options bind the (backend-only) API key; the typed HttpClient
 // is the only path to Google — the key is attached server-side and never reaches the browser.
