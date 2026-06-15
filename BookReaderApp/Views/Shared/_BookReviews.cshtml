@@ -47,9 +47,16 @@
     }
     else
     {
+        var isAuthenticated = Model.CurrentUserId is not null;
         foreach (var review in Model.Reviews)
         {
-            var isMine = Model.CurrentUserId is not null && review.UserId == Model.CurrentUserId;
+            var isMine = isAuthenticated && review.UserId == Model.CurrentUserId;
+            var likeCount = Model.LikeCounts.TryGetValue(review.Id, out var lc) ? lc : 0;
+            var likedByMe = Model.LikedReviewIds.Contains(review.Id);
+            var comments = Model.CommentsByReview.TryGetValue(review.Id, out var cs)
+                ? cs : Array.Empty<ReviewComment>();
+            // Logged-in readers may like/comment on other readers' reviews (any book, not just shelved).
+            var canInteract = isAuthenticated && !isMine;
             <div class="card mb-2">
                 <div class="card-body">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
@@ -74,6 +81,70 @@
                     else
                     {
                         <p class="mb-0" style="white-space: pre-wrap;">@review.Text</p>
+                    }
+
+                    @* Like control. Logged-in non-authors get a toggle button; everyone else sees a static count. *@
+                    <div class="mt-2 d-flex align-items-center gap-2">
+                        @if (canInteract)
+                        {
+                            <form asp-controller="Reviews" asp-action="ToggleLike" method="post" class="m-0">
+                                <input type="hidden" name="reviewId" value="@review.Id" />
+                                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                                <button type="submit"
+                                        class="btn btn-link p-0 lh-1 text-decoration-none @(likedByMe ? "text-danger" : "text-secondary")"
+                                        title="@(likedByMe ? "Unlike this review" : "Like this review")"
+                                        aria-label="@(likedByMe ? "Unlike this review" : "Like this review")">
+                                    @(likedByMe ? "♥" : "♡") <span class="small">@likeCount</span>
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-secondary lh-1" title="@likeCount like@(likeCount == 1 ? "" : "s")">
+                                ♥ <span class="small">@likeCount</span>
+                            </span>
+                        }
+                    </div>
+
+                    @* Comments thread. *@
+                    @if (comments.Count > 0)
+                    {
+                        <ul class="list-unstyled mt-3 mb-0 border-top pt-2">
+                            @foreach (var comment in comments)
+                            {
+                                var commentIsMine = isAuthenticated && comment.UserId == Model.CurrentUserId;
+                                <li class="mb-2">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="fw-semibold small">@(comment.User?.DisplayName ?? "Anonymous")</span>
+                                        <span class="small text-muted">@comment.CreatedAt.ToString("d MMM yyyy")</span>
+                                        @if (commentIsMine)
+                                        {
+                                            <form asp-controller="Reviews" asp-action="DeleteComment" method="post" class="m-0 ms-auto">
+                                                <input type="hidden" name="commentId" value="@comment.Id" />
+                                                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                                                <button type="submit" class="btn btn-link btn-sm p-0 text-decoration-none text-danger"
+                                                        title="Delete comment">Delete</button>
+                                            </form>
+                                        }
+                                    </div>
+                                    <p class="mb-0 small" style="white-space: pre-wrap;">@comment.Text</p>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    @* Add-comment box, only for logged-in readers commenting on others' reviews. *@
+                    @if (canInteract)
+                    {
+                        <form asp-controller="Reviews" asp-action="AddComment" method="post" class="mt-2">
+                            <input type="hidden" name="reviewId" value="@review.Id" />
+                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="text" class="form-control"
+                                       placeholder="Add a comment…" required aria-label="Add a comment" />
+                                <button type="submit" class="btn btn-outline-primary">Comment</button>
+                            </div>
+                        </form>
                     }
                 </div>
             </div>

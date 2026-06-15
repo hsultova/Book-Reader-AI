@@ -19,6 +19,8 @@ public class BooksController : Controller
     private readonly IUserBookService _userBookService;
     private readonly IShelfService _shelfService;
     private readonly IReviewService _reviewService;
+    private readonly IReviewLikeService _reviewLikeService;
+    private readonly IReviewCommentService _reviewCommentService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public BooksController(
@@ -29,6 +31,8 @@ public class BooksController : Controller
         IUserBookService userBookService,
         IShelfService shelfService,
         IReviewService reviewService,
+        IReviewLikeService reviewLikeService,
+        IReviewCommentService reviewCommentService,
         UserManager<ApplicationUser> userManager)
     {
         _bookService = bookService;
@@ -38,6 +42,8 @@ public class BooksController : Controller
         _userBookService = userBookService;
         _shelfService = shelfService;
         _reviewService = reviewService;
+        _reviewLikeService = reviewLikeService;
+        _reviewCommentService = reviewCommentService;
         _userManager = userManager;
     }
 
@@ -64,12 +70,20 @@ public class BooksController : Controller
         await PopulateShelfStatusesAsync(new[] { book.Id });
 
         // Reviews are shown to everyone; the user's own review (if any) prefills the edit form.
-        ViewData["BookReviews"] = await _reviewService.GetForBookAsync(book.Id);
+        var reviews = await _reviewService.GetForBookAsync(book.Id);
+        var reviewIds = reviews.Select(r => r.Id).ToList();
+        ViewData["BookReviews"] = reviews;
+
+        // Likes and comments are shown to everyone; only logged-in users get interaction.
+        ViewData["ReviewLikeCounts"] = await _reviewLikeService.GetLikeCountsAsync(reviewIds);
+        ViewData["ReviewComments"] = await _reviewCommentService.GetCommentsForReviewsAsync(reviewIds);
+
         if (User.Identity?.IsAuthenticated == true)
         {
             var userId = _userManager.GetUserId(User)!;
             ViewData["CurrentUserId"] = userId;
             ViewData["UserReview"] = await _reviewService.GetUserReviewAsync(userId, book.Id);
+            ViewData["ReviewLikedIds"] = await _reviewLikeService.GetLikedReviewIdsAsync(userId, reviewIds);
         }
 
         return View(book);

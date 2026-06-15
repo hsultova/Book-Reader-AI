@@ -20,4 +20,14 @@ public class BookReviewsViewModel
 
     // Local URL to return to after a review change (preserves the current page).
     public string? ReturnUrl { get; set; }
+
+    // Like count per review id (reviews with no likes are omitted).
+    public IReadOnlyDictionary<int, int> LikeCounts { get; set; } = new Dictionary<int, int>();
+
+    // Review ids the current user has liked. Empty when anonymous.
+    public IReadOnlySet<int> LikedReviewIds { get; set; } = new HashSet<int>();
+
+    // Comments per review id, oldest-first (reviews with no comments are omitted).
+    public IReadOnlyDictionary<int, IReadOnlyList<ReviewComment>> CommentsByReview { get; set; }
+        = new Dictionary<int, IReadOnlyList<ReviewComment>>();
 }

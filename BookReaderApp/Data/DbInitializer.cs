@@ -35,6 +35,47 @@ public static class DbInitializer
 
         await SeedAsync(userManager, roleManager, adminPassword, userPassword);
         await SeedBooksAsync(db, userManager);
+        await SeedSampleReviewAsync(db, userManager);
+    }
+
+    // Ensures the admin has a sample review on the first catalog book, so the test user
+    // always has another reader's review to like and comment on. Idempotent: only adds the
+    // review (and shelves the book for admin) when the admin has no review on that book yet.
+    private static async Task SeedSampleReviewAsync(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> userManager)
+    {
+        var book = await db.Books.OrderBy(b => b.Id).FirstOrDefaultAsync();
+        if (book is null)
+        {
+            return;
+        }
+
+        var admin = await userManager.FindByEmailAsync(AdminEmail);
+        if (admin is null ||
+            await db.Reviews.AnyAsync(r => r.UserId == admin.Id && r.BookId == book.Id))
+        {
+            return;
+        }
+
+        if (!await db.UserBooks.AnyAsync(ub => ub.UserId == admin.Id && ub.BookId == book.Id))
+        {
+            db.UserBooks.Add(new UserBook
+            {
+                UserId = admin.Id,
+                BookId = book.Id,
+                Status = ReadingStatus.Finished
+            });
+        }
+
+        db.Reviews.Add(new Review
+        {
+            UserId = admin.Id,
+            BookId = book.Id,
+            Text = "A timeless classic — every developer should read it at least once.",
+            ContainsSpoilers = false
+        });
+        await db.SaveChangesAsync();
     }
 
     // Seeds a sample book and places it on the test user's shelf so "My Books" has

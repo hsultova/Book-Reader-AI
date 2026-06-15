@@ -23,4 +23,9 @@ public class Review
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Likes and comments left by other readers on this review.
+    public ICollection<ReviewLike> Likes { get; set; } = new List<ReviewLike>();
+
+    public ICollection<ReviewComment> Comments { get; set; } = new List<ReviewComment>();
 }

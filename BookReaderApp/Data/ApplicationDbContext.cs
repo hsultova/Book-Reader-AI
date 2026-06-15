@@ -23,6 +23,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Review> Reviews => Set<Review>();
 
+    public DbSet<ReviewLike> ReviewLikes => Set<ReviewLike>();
+
+    public DbSet<ReviewComment> ReviewComments => Set<ReviewComment>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -86,6 +90,38 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // A user can review a given book only once.
             entity.HasIndex(r => new { r.UserId, r.BookId }).IsUnique();
+        });
+
+        builder.Entity<ReviewLike>(entity =>
+        {
+            entity.HasOne(l => l.Review)
+                .WithMany(r => r.Likes)
+                .HasForeignKey(l => l.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Restrict on the user side: the Review->User cascade already reaches
+            // AspNetUsers, and a second cascade path would trip SQL Server.
+            entity.HasOne(l => l.User)
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // A user can like a given review only once.
+            entity.HasIndex(l => new { l.ReviewId, l.UserId }).IsUnique();
+        });
+
+        builder.Entity<ReviewComment>(entity =>
+        {
+            entity.HasOne(c => c.Review)
+                .WithMany(r => r.Comments)
+                .HasForeignKey(c => c.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Restrict for the same multiple-cascade-path reason as ReviewLike.
+            entity.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
