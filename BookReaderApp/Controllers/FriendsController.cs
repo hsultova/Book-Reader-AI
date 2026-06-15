@@ -59,4 +59,12 @@ public class FriendsController : Controller
         await _friendRequests.RejectAsync(id, userId);
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Cancel(int id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        await _friendRequests.CancelAsync(id, userId);
+        return RedirectToAction(nameof(Index));
+    }
 }

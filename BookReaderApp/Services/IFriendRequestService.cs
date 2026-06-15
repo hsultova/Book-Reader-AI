@@ -23,6 +23,9 @@ public interface IFriendRequestService
     // Rejects a pending request. Only the addressee may reject.
     Task RejectAsync(int requestId, string currentUserId);
 
+    // Cancels (deletes) a pending request the current user sent. Only the requester may cancel.
+    Task CancelAsync(int requestId, string currentUserId);
+
     // Builds the Friends page (friends + incoming + outgoing pending requests).
     // When searchQuery is set, also returns matching registered users (with their
     // relationship state) so new friend requests can be sent from the results.

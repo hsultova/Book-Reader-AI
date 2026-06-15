@@ -59,7 +59,10 @@
                                 </form>
                                 break;
                             case BookReaderApp.Models.ViewModels.FriendState.OutgoingPending:
-                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Request sent</button>
+                                <form asp-controller="Friends" asp-action="Cancel" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@user.RequestId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Cancel friend request</button>
+                                </form>
                                 break;
                             case BookReaderApp.Models.ViewModels.FriendState.IncomingPending:
                                 <form asp-controller="Friends" asp-action="Accept" method="post" class="d-inline">
@@ -144,37 +147,6 @@
                         <input type="hidden" name="id" value="@req.RequestId" />
                         <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
                     </form>
-                </li>
-            }
-        </ul>
-    }
-</section>
-
-<section>
-    <h2 class="h5 mb-3">Requests sent</h2>
-    @if (Model.OutgoingRequests.Count == 0)
-    {
-        <p class="text-muted">You have no pending sent requests.</p>
-    }
-    else
-    {
-        <ul class="list-group">
-            @foreach (var req in Model.OutgoingRequests)
-            {
-                <li class="list-group-item d-flex align-items-center gap-3">
-                    @if (!string.IsNullOrEmpty(req.ProfilePicturePath))
-                    {
-                        <img src="@req.ProfilePicturePath" alt="@req.DisplayName"
-                             class="rounded-circle object-fit-cover" width="40" height="40" />
-                    }
-                    else
-                    {
-                        <span class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center"
-                              style="width:40px;height:40px;">@Initial(req.DisplayName)</span>
-                    }
-                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@req.UserId"
-                       class="text-decoration-none me-auto">@req.DisplayName</a>
-                    <span class="badge bg-secondary">Pending</span>
                 </li>
             }
         </ul>

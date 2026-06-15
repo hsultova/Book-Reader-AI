@@ -96,6 +96,22 @@ public class FriendRequestService : IFriendRequestService
     public async Task RejectAsync(int requestId, string currentUserId) =>
         await RespondAsync(requestId, currentUserId, FriendRequestStatus.Rejected);
 
+    public async Task CancelAsync(int requestId, string currentUserId)
+    {
+        var request = await _requests.GetByIdAsync(requestId);
+
+        // Only the requester may cancel, and only while it's still pending.
+        if (request is null || request.RequesterId != currentUserId || request.Status != FriendRequestStatus.Pending)
+        {
+            return;
+        }
+
+        // Remove the row outright so the pair can start fresh later.
+        _requests.Remove(request);
+        await _requests.SaveChangesAsync();
+        _logger.LogInformation("Friend request {RequestId} cancelled by {User}.", requestId, currentUserId);
+    }
+
     private async Task RespondAsync(int requestId, string currentUserId, FriendRequestStatus status)
     {
         var request = await _requests.GetByIdAsync(requestId);
@@ -164,10 +180,8 @@ public class FriendRequestService : IFriendRequestService
         var results = new List<FriendSearchResultItem>(matches.Count);
         foreach (var user in matches)
         {
-            var state = await GetRelationshipAsync(currentUserId, user.Id);
-            var requestId = state == FriendState.IncomingPending
-                ? await GetIncomingRequestIdAsync(currentUserId, user.Id)
-                : null;
+            var existing = await _requests.GetBetweenAsync(currentUserId, user.Id);
+            var (state, requestId) = ResolveState(currentUserId, existing);
 
             results.Add(new FriendSearchResultItem(
                 user.Id, user.DisplayName, user.ProfilePicturePath, state, requestId));
@@ -175,6 +189,18 @@ public class FriendRequestService : IFriendRequestService
 
         return results;
     }
+
+    // Maps a (possibly null) request row to the viewer's relationship and, for pending
+    // rows, the request id so cancel/accept/reject can target it.
+    private static (FriendState State, int? RequestId) ResolveState(string currentUserId, FriendRequest? existing) =>
+        existing switch
+        {
+            { Status: FriendRequestStatus.Accepted } => (FriendState.Friends, null),
+            { Status: FriendRequestStatus.Pending } r => r.RequesterId == currentUserId
+                ? (FriendState.OutgoingPending, r.Id)
+                : (FriendState.IncomingPending, r.Id),
+            _ => (FriendState.None, null) // null or Rejected: a fresh request may be sent.
+        };
 
     private static FriendListItem ToItem(ApplicationUser? user, int? requestId) =>
         new(
