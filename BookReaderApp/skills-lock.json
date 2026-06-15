@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "aspnet-signalr": {
+      "source": "claude-dev-suite/claude-dev-suite",
+      "sourceType": "github",
+      "skillPath": "skills/backend-frameworks/aspnet-signalr/SKILL.md",
+      "computedHash": "d0c6f09a5ff91f2b420529dbfede9fb528baee60b786e8fee023dca7f0cc1869"
+    },
     "mvc-master": {
       "source": "gravito-framework/gravito",
       "sourceType": "github",

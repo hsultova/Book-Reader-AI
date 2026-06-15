@@ -77,6 +77,10 @@
                                 <button type="button" class="btn btn-outline-success" disabled>
                                     <i class="bi bi-check-lg"></i> Friends
                                 </button>
+                                <form asp-controller="Messages" asp-action="Open" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.UserId" />
+                                    <button type="submit" class="btn btn-primary">Message</button>
+                                </form>
                                 break;
                         }
                     </div>

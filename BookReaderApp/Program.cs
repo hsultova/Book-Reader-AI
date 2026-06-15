@@ -1,5 +1,11 @@
+using BookReaderApp.Adapters;
 using BookReaderApp.Configuration;
 using BookReaderApp.Data;
+using BookReaderApp.Hubs;
+using BookReaderApp.Messaging.Abstractions;
+using BookReaderApp.Messaging.Data;
+using BookReaderApp.Messaging.Repositories;
+using BookReaderApp.Messaging.Services;
 using BookReaderApp.Models;
 using BookReaderApp.Repositories;
 using BookReaderApp.Services;
@@ -16,6 +22,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+
+// Messaging module: shares the physical SQLite database but keeps its own schema and a
+// separate migrations history table so the two contexts never collide.
+builder.Services.AddDbContext<MessagingDbContext>(options =>
+    options.UseSqlite(connectionString, sqlite =>
+        sqlite.MigrationsHistoryTable("__EFMigrationsHistory_Messaging")));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -77,6 +89,16 @@ builder.Services.AddScoped<IReviewCommentService, ReviewCommentService>();
 builder.Services.AddScoped<IFriendRequestService, FriendRequestService>();
 builder.Services.AddScoped<IUpdatesService, UpdatesService>();
 
+// Messaging module. Repositories + service live in the BookReaderApp.Messaging class
+// library; the two adapters below are the host-side implementations of its abstractions
+// (friendship check delegates to the existing friend-request service; notifications go
+// out over SignalR).
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IDirectMessageRepository, DirectMessageRepository>();
+builder.Services.AddScoped<IMessagingService, MessagingService>();
+builder.Services.AddScoped<IFriendshipChecker, FriendRequestFriendshipChecker>();
+builder.Services.AddScoped<IMessageNotifier, SignalRMessageNotifier>();
+
 // Google Books integration. Options bind the (backend-only) API key; the typed HttpClient
 // is the only path to Google — the key is attached server-side and never reaches the browser.
 builder.Services.Configure<GoogleBooksOptions>(
@@ -88,6 +110,9 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
+
+// Real-time transport for direct messaging.
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -112,6 +137,15 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapHub<ChatHub>("/hubs/chat");
+
 await DbInitializer.SeedAsync(app.Services);
+
+// Apply the messaging module's migrations (DbInitializer migrates the Identity context).
+using (var scope = app.Services.CreateScope())
+{
+    var messagingDb = scope.ServiceProvider.GetRequiredService<MessagingDbContext>();
+    await messagingDb.Database.MigrateAsync();
+}
 
 app.Run();

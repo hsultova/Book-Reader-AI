@@ -1,4 +1,16 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using BookReaderApp.Models
+@inject BookReaderApp.Messaging.Services.IMessagingService MessagingService
+@inject UserManager<ApplicationUser> UserManager
+@{
+    // Initial unread badge value; live updates arrive over SignalR (see scripts below).
+    var unreadCount = 0;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        unreadCount = await MessagingService.GetUnreadCountAsync(UserManager.GetUserId(User)!);
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -32,6 +44,13 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="MyBooks" asp-action="Index">My Books</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Messages" asp-action="Index">
+                                    Messages
+                                    <span id="nav-unread-badge"
+                                          class="badge bg-primary rounded-pill @(unreadCount > 0 ? "" : "d-none")">@unreadCount</span>
+                                </a>
+                            </li>
                         }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
@@ -56,6 +75,29 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- One shared chat connection per page: keeps the unread badge live everywhere and
+             is reused by the thread view (window.chatConnection) for incoming messages. -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+        <script>
+            (function () {
+                const badge = document.getElementById("nav-unread-badge");
+                function renderBadge(count) {
+                    if (!badge) return;
+                    badge.textContent = count;
+                    badge.classList.toggle("d-none", count <= 0);
+                }
+
+                window.chatConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/hubs/chat")
+                    .withAutomaticReconnect()
+                    .build();
+                window.chatConnection.on("UnreadCountChanged", renderBadge);
+                window.chatConnection.start().catch(err => console.error(err));
+            })();
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

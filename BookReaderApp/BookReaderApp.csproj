@@ -19,4 +19,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BookReaderApp.Messaging\BookReaderApp.Messaging.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BookReaderApp\BookReaderApp.csproj" />
+    <ProjectReference Include="..\BookReaderApp.Messaging\BookReaderApp.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

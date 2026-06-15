@@ -1,0 +1,109 @@
+@model BookReaderApp.Models.ViewModels.ThreadViewModel
+@{
+    ViewData["Title"] = $"Chat with {Model.OtherDisplayName}";
+}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">&larr; All messages</a>
+    <h1 class="h4 mb-0">
+        <a asp-controller="Profile" asp-action="Index" asp-route-id="@Model.OtherUserId"
+           class="text-decoration-none">@Model.OtherDisplayName</a>
+    </h1>
+</div>
+
+<div id="thread" class="d-flex flex-column gap-2 border rounded p-3 mb-3"
+     style="height:60vh;overflow-y:auto;background-color:#f8f9fa;">
+    @foreach (var m in Model.Messages)
+    {
+        <div class="d-flex @(m.IsMine ? "justify-content-end" : "justify-content-start")">
+            <div class="px-3 py-2 rounded-3 @(m.IsMine ? "bg-primary text-white" : "bg-white border")"
+                 style="max-width:75%;white-space:pre-wrap;word-break:break-word;">
+                @m.Content
+            </div>
+        </div>
+    }
+</div>
+
+<form id="send-form" class="input-group">
+    @Html.AntiForgeryToken()
+    <input type="text" id="message-input" class="form-control" autocomplete="off"
+           placeholder="Write a message…" maxlength="2000" aria-label="Message" required />
+    <button type="submit" class="btn btn-primary">Send</button>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            const conversationId = @Model.ConversationId;
+            const recipientId = @Json.Serialize(Model.OtherUserId);
+            const thread = document.getElementById("thread");
+            const form = document.getElementById("send-form");
+            const input = document.getElementById("message-input");
+            const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            function escapeHtml(text) {
+                const div = document.createElement("div");
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function appendMessage(content, mine) {
+                const row = document.createElement("div");
+                row.className = "d-flex " + (mine ? "justify-content-end" : "justify-content-start");
+                const bubble = document.createElement("div");
+                bubble.className = "px-3 py-2 rounded-3 " + (mine ? "bg-primary text-white" : "bg-white border");
+                bubble.style.maxWidth = "75%";
+                bubble.style.whiteSpace = "pre-wrap";
+                bubble.style.wordBreak = "break-word";
+                bubble.innerHTML = escapeHtml(content);
+                row.appendChild(bubble);
+                thread.appendChild(row);
+                thread.scrollTop = thread.scrollHeight;
+            }
+
+            // Start at the bottom (most recent messages).
+            thread.scrollTop = thread.scrollHeight;
+
+            // Live receive over the shared connection started in _Layout. Messages for the
+            // open thread are appended and immediately marked read so the badge stays clean.
+            if (window.chatConnection) {
+                window.chatConnection.on("MessageReceived", function (message) {
+                    if (message.conversationId === conversationId) {
+                        appendMessage(message.content, false);
+                        fetch("@Url.Action("MarkRead", new { id = Model.ConversationId })", {
+                            method: "POST",
+                            headers: { "RequestVerificationToken": token }
+                        }).catch(err => console.error(err));
+                    }
+                });
+            }
+
+            // Send via fetch so the page never reloads; the server pushes to the recipient.
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                const content = input.value.trim();
+                if (!content) {
+                    return;
+                }
+
+                const body = new URLSearchParams({ recipientId: recipientId, content: content });
+                const response = await fetch("@Url.Action("Send")", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "RequestVerificationToken": token
+                    },
+                    body: body
+                });
+
+                if (response.ok) {
+                    appendMessage(content, true);
+                    input.value = "";
+                    input.focus();
+                } else {
+                    console.error("Failed to send message:", response.status);
+                }
+            });
+        })();
+    </script>
+}
