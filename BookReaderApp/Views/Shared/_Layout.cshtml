@@ -44,12 +44,18 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="MyBooks" asp-action="Index">My Books</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Messages" asp-action="Index">
-                                    Messages
+                            <li class="nav-item dropdown">
+                                <a class="nav-link text-dark dropdown-toggle" href="#" id="communityDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    Community
                                     <span id="nav-unread-badge"
                                           class="badge bg-primary rounded-pill @(unreadCount > 0 ? "" : "d-none")">@unreadCount</span>
                                 </a>
+                                <ul class="dropdown-menu" aria-labelledby="communityDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Messages" asp-action="Index">Messages</a>
+                                    </li>
+                                </ul>
                             </li>
                         }
                     </ul>
