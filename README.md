@@ -151,6 +151,14 @@ Tests follow the `Method_Scenario_ExpectedBehavior` naming convention and cover 
 layers, mocking external dependencies with Moq and using EF Core's InMemory provider where a context is needed.
 
 ---
+## UI screenshots
+
+<img width="1911" height="940" alt="image" src="https://github.com/user-attachments/assets/7fbf00cb-1985-47f0-9ba9-0e9a557ee720" />
+<img width="1879" height="935" alt="image" src="https://github.com/user-attachments/assets/10826740-4177-4bff-a930-0c17bc371ab0" />
+<img width="1906" height="923" alt="image" src="https://github.com/user-attachments/assets/909d6f0b-edf7-479b-86d2-c60a5ed8e596" />
+
+
+
 
 ## License
 
