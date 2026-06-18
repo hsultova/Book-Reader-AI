@@ -16,6 +16,7 @@ public class BooksController : Controller
     private readonly IAuthorService _authorService;
     private readonly IGenreService _genreService;
     private readonly IGoogleBooksService _googleBooksService;
+    private readonly IRecommendationService _recommendationService;
     private readonly IUserBookService _userBookService;
     private readonly IShelfService _shelfService;
     private readonly IReviewService _reviewService;
@@ -28,6 +29,7 @@ public class BooksController : Controller
         IAuthorService authorService,
         IGenreService genreService,
         IGoogleBooksService googleBooksService,
+        IRecommendationService recommendationService,
         IUserBookService userBookService,
         IShelfService shelfService,
         IReviewService reviewService,
@@ -39,6 +41,7 @@ public class BooksController : Controller
         _authorService = authorService;
         _genreService = genreService;
         _googleBooksService = googleBooksService;
+        _recommendationService = recommendationService;
         _userBookService = userBookService;
         _shelfService = shelfService;
         _reviewService = reviewService;
@@ -53,7 +56,22 @@ public class BooksController : Controller
     {
         var books = await _bookService.SearchBooksAsync(q, page);
         ViewData["SearchQuery"] = q;
-        await PopulateShelfStatusesAsync(books.Items.Select(b => b.Id));
+
+        // Personalized "Because you enjoyed..." rows: logged-in users only, and only while
+        // browsing the full catalog (a search query takes over the page).
+        IReadOnlyList<RecommendationGroupViewModel> recommendations =
+            [];
+        if (string.IsNullOrWhiteSpace(q) && User.Identity?.IsAuthenticated == true)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            recommendations = await _recommendationService.GetRecommendationsAsync(userId);
+        }
+        ViewData["Recommendations"] = recommendations;
+
+        // Load shelf/rating data for catalog and recommended books alike so every card renders.
+        var allBookIds = books.Items.Select(b => b.Id)
+            .Concat(recommendations.SelectMany(g => g.Books.Select(b => b.Id)));
+        await PopulateShelfStatusesAsync(allBookIds);
         return View(books);
     }
 

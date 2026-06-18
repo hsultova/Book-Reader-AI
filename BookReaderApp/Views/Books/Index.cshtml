@@ -5,15 +5,10 @@
     ViewData["Title"] = "Books";
     var canManage = User.IsInRole(AppRoles.Admin)
         || User.IsInRole(AppRoles.Moderator);
-    var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var shelfPlacements = ViewData["ShelfPlacements"] as IReadOnlyDictionary<int, UserBook>
-        ?? new Dictionary<int, UserBook>();
-    var userShelves = ViewData["UserShelves"] as IReadOnlyList<Shelf>
-        ?? Array.Empty<Shelf>();
-    var ratingSummaries = ViewData["RatingSummaries"] as IReadOnlyDictionary<int, RatingSummary>
-        ?? new Dictionary<int, RatingSummary>();
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    // Per-book shelf/rating data is read inside the _BookCard partial via ViewData.
     var searchQuery = ViewData["SearchQuery"] as string;
+    var recommendations = ViewData["Recommendations"] as IReadOnlyList<RecommendationGroupViewModel>
+        ?? Array.Empty<RecommendationGroupViewModel>();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -44,6 +39,26 @@
     </p>
 }
 
+@if (recommendations.Count > 0)
+{
+    <section class="mb-4">
+        @foreach (var group in recommendations)
+        {
+            <h2 class="h5 mb-2">@group.Title</h2>
+            <div class="d-flex flex-row overflow-auto gap-3 pb-2 mb-3 recommendation-row">
+                @foreach (var book in group.Books)
+                {
+                    <div class="recommendation-card">
+                        <partial name="_BookCard" model="book" />
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <h2 class="h5 mb-3 text-muted">All books</h2>
+}
+
 @if (Model.TotalCount == 0)
 {
     <p class="text-muted">
@@ -58,43 +73,7 @@ else
         @foreach (var book in Model.Items)
         {
             <div class="col">
-                <div class="card book-card h-100">
-                    @if (!string.IsNullOrEmpty(book.CoverImageUrl))
-                    {
-                        <img src="@book.CoverImageUrl" class="book-cover" alt="Cover of @book.Title" loading="lazy" />
-                    }
-                    else
-                    {
-                        <div class="book-cover-empty">No cover</div>
-                    }
-                    <div class="card-body d-flex flex-column">
-                        <h2 class="h5 card-title">@book.Title</h2>
-                        <p class="card-text text-muted mb-1">@book.Author?.Name</p>
-                        @if (!string.IsNullOrEmpty(book.Genre?.Name))
-                        {
-                            <span class="badge bg-secondary align-self-start mb-2">@book.Genre.Name</span>
-                        }
-                        @{
-                            var cardPlacement = shelfPlacements.TryGetValue(book.Id, out var cardUb) ? cardUb : null;
-                            var cardSummary = ratingSummaries.TryGetValue(book.Id, out var cardRs) ? cardRs : null;
-                        }
-                        <div class="mb-2">
-                            <partial name="_StarRating" model="@(new StarRatingViewModel { BookId = book.Id, UserRating = cardPlacement?.Rating, Summary = cardSummary, ReturnUrl = returnUrl, CanRate = isAuthenticated && cardPlacement is not null })" />
-                        </div>
-                        <div class="mt-auto d-flex flex-wrap gap-1">
-                            <a asp-action="Details" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary">Details</a>
-                            @if (isAuthenticated)
-                            {
-                                <partial name="_ShelfDropdown" model="@(new ShelfDropdownViewModel { BookId = book.Id, CurrentStatus = cardPlacement?.Status, CurrentShelfId = cardPlacement?.ShelfId, CurrentShelfName = cardPlacement?.Shelf?.Name, CustomShelves = userShelves, ReturnUrl = returnUrl })" />
-                            }
-                            @if (canManage)
-                            {
-                                <a asp-action="Edit" asp-route-id="@book.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@book.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                            }
-                        </div>
-                    </div>
-                </div>
+                <partial name="_BookCard" model="book" />
             </div>
         }
     </div>

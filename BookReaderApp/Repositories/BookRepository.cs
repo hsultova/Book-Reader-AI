@@ -53,4 +53,15 @@ public class BookRepository : EfRepository<Book>, IBookRepository
 
         return new PagedResult<Book>(items, page, pageSize, totalCount);
     }
+
+    public async Task<IReadOnlyList<Book>> GetSimilarAsync(
+        int authorId, int? genreId, IReadOnlyCollection<int> excludeBookIds, int take) =>
+        await Set
+            .Include(b => b.Author)
+            .Include(b => b.Genre)
+            .Where(b => !excludeBookIds.Contains(b.Id)
+                && (b.AuthorId == authorId || (genreId != null && b.GenreId == genreId)))
+            .OrderBy(b => b.Title)
+            .Take(take)
+            .ToListAsync();
 }

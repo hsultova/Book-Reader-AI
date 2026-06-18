@@ -10,4 +10,9 @@ public interface IBookRepository : IRepository<Book>
     // otherwise matches the term against title, author name, ISBN, description and genre.
     Task<PagedResult<Book>> SearchPagedAsync(
         string? query, int page, int pageSize = PagedResult<Book>.DefaultPageSize);
+
+    // Books "similar" to a source book: same author OR (when set) same genre, excluding the
+    // given book ids. Ordered by title, capped at take. Used to build recommendation rows.
+    Task<IReadOnlyList<Book>> GetSimilarAsync(
+        int authorId, int? genreId, IReadOnlyCollection<int> excludeBookIds, int take);
 }

@@ -21,6 +21,18 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
             .OrderByDescending(ub => ub.AddedAt)
             .ToListAsync();
 
+    public async Task<IReadOnlyList<UserBook>> GetHighRatedForUserAsync(
+        string userId, int minRating, int take) =>
+        await Set
+            .Include(ub => ub.Book)
+                .ThenInclude(b => b!.Author)
+            .Include(ub => ub.Book)
+                .ThenInclude(b => b!.Genre)
+            .Where(ub => ub.UserId == userId && ub.Rating != null && ub.Rating >= minRating)
+            .OrderByDescending(ub => ub.RatedAt)
+            .Take(take)
+            .ToListAsync();
+
     public async Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId) =>
         await Set.FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BookId == bookId);
 

@@ -8,6 +8,10 @@ public interface IUserBookRepository : IRepository<UserBook>
 {
     Task<IReadOnlyList<UserBook>> GetForUserAsync(string userId);
 
+    // A user's most highly-rated books (Rating >= minRating), newest rating first, with the
+    // Book, its Author and Genre loaded. Drives the "Because you enjoyed..." recommendations.
+    Task<IReadOnlyList<UserBook>> GetHighRatedForUserAsync(string userId, int minRating, int take);
+
     // The single shelf entry for a user/book pair (the unique index guarantees at most one), or null.
     Task<UserBook?> GetForUserAndBookAsync(string userId, int bookId);
 

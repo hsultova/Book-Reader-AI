@@ -301,6 +301,17 @@ a:focus-visible {
     aspect-ratio: 2 / 3;
 }
 
+/* ---------- "Because you enjoyed..." recommendation strips ---------- */
+.recommendation-row {
+    scroll-snap-type: x proximity;
+}
+
+.recommendation-card {
+    flex: 0 0 auto;
+    width: 220px;
+    scroll-snap-align: start;
+}
+
 /* ---------- Badges / chips ---------- */
 .badge {
     font-weight: 500;
