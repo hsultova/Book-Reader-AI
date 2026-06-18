@@ -76,6 +76,7 @@ builder.Services.AddScoped<IFriendRequestRepository, FriendRequestRepository>();
 builder.Services.AddScoped<IRepository<FriendRequest>>(sp => sp.GetRequiredService<IFriendRequestRepository>());
 builder.Services.AddScoped<IFollowRepository, FollowRepository>();
 builder.Services.AddScoped<IRepository<Follow>>(sp => sp.GetRequiredService<IFollowRepository>());
+builder.Services.AddScoped<IAuthorFollowRepository, AuthorFollowRepository>();
 
 // Business-logic layer. Scoped to match the Identity managers / DbContext it depends on.
 builder.Services.AddScoped<IAccountService, AccountService>();

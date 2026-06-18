@@ -18,4 +18,6 @@ public class Author
     public string? Photo { get; set; }
 
     public ICollection<Book> Books { get; set; } = new List<Book>();
+
+    public ICollection<AuthorFollow> Followers { get; set; } = new List<AuthorFollow>();
 }
