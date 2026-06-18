@@ -46,10 +46,50 @@ public class AuthorsController : Controller
             Author = author,
             FollowerCount = followerCount,
             IsFollowing = isFollowing,
-            IsAuthenticated = isAuthenticated
+            IsAuthenticated = isAuthenticated,
+            IsAdmin = User.IsInRole(AppRoles.Admin)
         };
 
         return View(vm);
+    }
+
+    [HttpGet]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var author = await _authorService.GetAuthorByIdAsync(id);
+        if (author is null)
+        {
+            return NotFound();
+        }
+
+        ViewData["AuthorId"] = id;
+        return View(new AuthorFormViewModel
+        {
+            Name = author.Name,
+            Description = author.Description,
+            Photo = author.Photo
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, AuthorFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewData["AuthorId"] = id;
+            return View(model);
+        }
+
+        var updated = await _authorService.UpdateAuthorAsync(id, model.Name, model.Description, model.Photo);
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpPost]

@@ -28,6 +28,22 @@ public class AuthorService : IAuthorService
     public Task<Author?> GetAuthorWithBooksAsync(int id) =>
         _authors.GetWithBooksAsync(id);
 
+    public async Task<bool> UpdateAuthorAsync(int id, string name, string? description, string? photo)
+    {
+        var author = await _authors.GetByIdAsync(id);
+        if (author is null)
+            return false;
+
+        author.Name = name;
+        author.Description = description;
+        author.Photo = photo;
+
+        _authors.Update(author);
+        await _authors.SaveChangesAsync();
+        _logger.LogInformation("Author {AuthorId} updated.", id);
+        return true;
+    }
+
     public Task<int> GetFollowerCountAsync(int authorId) =>
         _authorFollows.GetFollowerCountAsync(authorId);
 
