@@ -31,4 +31,8 @@ public class UserBook
     public DateTime? RatedAt { get; set; }
 
     public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+
+    // When the book was marked Finished, or null if it has never been finished. Cleared
+    // when the book leaves the Finished status. Drives the annual reading challenge.
+    public DateTime? FinishedAt { get; set; }
 }

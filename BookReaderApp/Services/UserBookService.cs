@@ -17,6 +17,8 @@ public class UserBookService : IUserBookService
 
     public async Task SetStatusAsync(string userId, int bookId, ReadingStatus status)
     {
+        // Stamp FinishedAt the moment a book becomes Finished; clear it when it leaves that
+        // status. This feeds the annual reading challenge on the profile.
         var existing = await _userBooks.GetForUserAndBookAsync(userId, bookId);
         if (existing is null)
         {
@@ -26,10 +28,21 @@ public class UserBookService : IUserBookService
                 BookId = bookId,
                 Status = status,
                 AddedAt = DateTime.UtcNow,
+                FinishedAt = status == ReadingStatus.Finished ? DateTime.UtcNow : null,
             });
         }
         else
         {
+            // Preserve an existing finish date on a no-op re-mark; set it on transition in.
+            if (status == ReadingStatus.Finished)
+            {
+                existing.FinishedAt ??= DateTime.UtcNow;
+            }
+            else
+            {
+                existing.FinishedAt = null;
+            }
+
             existing.Status = status;
             existing.ShelfId = null;
             _userBooks.Update(existing);
@@ -55,6 +68,8 @@ public class UserBookService : IUserBookService
         {
             existing.ShelfId = shelfId;
             existing.Status = null;
+            // Moving to a custom shelf leaves the Finished status, so it's no longer finished.
+            existing.FinishedAt = null;
             _userBooks.Update(existing);
         }
 

@@ -97,4 +97,11 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
             .Take(take)
             .Select(ub => new ReaderAvatar(ub.UserId, ub.User!.DisplayName, ub.User.ProfilePicturePath))
             .ToListAsync();
+
+    public async Task<int> CountFinishedInYearAsync(string userId, int year) =>
+        await Set.CountAsync(ub =>
+            ub.UserId == userId
+            && ub.Status == ReadingStatus.Finished
+            && ub.FinishedAt != null
+            && ub.FinishedAt.Value.Year == year);
 }

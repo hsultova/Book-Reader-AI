@@ -44,6 +44,26 @@ public class ProfileController : Controller
         return View(profile);
     }
 
+    // Sets or clears the annual reading-challenge goal from the profile page modal.
+    [HttpPost]
+    public async Task<IActionResult> UpdateGoal(int? readingGoal)
+    {
+        if (readingGoal is < 0 or > 1000)
+        {
+            TempData["GoalError"] = "Reading goal must be between 0 and 1000.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var userId = _userManager.GetUserId(User)!;
+        var updated = await _profileService.UpdateReadingGoalAsync(userId, readingGoal);
+        if (!updated)
+        {
+            TempData["GoalError"] = "Could not update your reading goal. Please try again.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpGet]
     public async Task<IActionResult> Settings()
     {

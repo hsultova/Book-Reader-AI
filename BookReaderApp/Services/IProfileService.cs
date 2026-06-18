@@ -15,4 +15,8 @@ public interface IProfileService
 
     // newPicturePath is the already-saved avatar path, or null to keep the current one.
     Task<bool> UpdateProfileAsync(string userId, ProfileSettingsViewModel model, string? newPicturePath);
+
+    // Sets just the annual reading-challenge goal (null clears it). Independent of the full
+    // settings form so the goal can be adjusted inline from the profile page.
+    Task<bool> UpdateReadingGoalAsync(string userId, int? goal);
 }

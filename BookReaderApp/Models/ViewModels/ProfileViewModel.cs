@@ -32,4 +32,7 @@ public class ProfileViewModel
     // Whether the viewer follows this user; drives the Follow/Unfollow button. Only
     // meaningful when IsOwnProfile is false.
     public bool IsFollowing { get; set; }
+
+    // The annual reading challenge for the profile's owner (goal, progress, milestones).
+    public ReadingChallengeViewModel Challenge { get; set; } = new();
 }

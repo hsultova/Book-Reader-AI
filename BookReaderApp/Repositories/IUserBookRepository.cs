@@ -39,4 +39,8 @@ public interface IUserBookRepository : IRepository<UserBook>
     // A sample of users (newest shelf addition first) who currently have the book on a shelf
     // with the given status. Drives the avatar stack on the book Details page.
     Task<IReadOnlyList<ReaderAvatar>> GetStatusReadersAsync(int bookId, ReadingStatus status, int take);
+
+    // How many books the user marked Finished during the given calendar year. Drives the
+    // annual reading challenge progress on the profile page.
+    Task<int> CountFinishedInYearAsync(string userId, int year);
 }
