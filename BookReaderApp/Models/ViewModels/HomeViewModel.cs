@@ -12,6 +12,7 @@ public enum UpdateKind
 // when they don't apply (ShelfLabel for ShelfAdd, Rating for Rating, ReviewSnippet for Review).
 public record UpdateItem(
     UpdateKind Kind,
+    string FriendUserId,
     string FriendDisplayName,
     string? FriendProfilePicturePath,
     int BookId,

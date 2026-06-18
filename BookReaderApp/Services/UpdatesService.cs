@@ -58,6 +58,7 @@ public class UpdatesService : IUpdatesService
     private static UpdateItem ToReviewItem(Review r) =>
         new(
             UpdateKind.Review,
+            r.UserId,
             r.User?.DisplayName ?? "A friend",
             r.User?.ProfilePicturePath,
             r.BookId,
@@ -71,6 +72,7 @@ public class UpdatesService : IUpdatesService
     private static UpdateItem ToShelfAddItem(UserBook ub) =>
         new(
             UpdateKind.ShelfAdd,
+            ub.UserId,
             ub.User?.DisplayName ?? "A friend",
             ub.User?.ProfilePicturePath,
             ub.BookId,
@@ -84,6 +86,7 @@ public class UpdatesService : IUpdatesService
     private static UpdateItem ToRatingItem(UserBook ub) =>
         new(
             UpdateKind.Rating,
+            ub.UserId,
             ub.User?.DisplayName ?? "A friend",
             ub.User?.ProfilePicturePath,
             ub.BookId,

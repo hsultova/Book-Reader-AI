@@ -223,6 +223,34 @@ a:focus-visible {
     line-height: 1.2;
 }
 
+/* Clickable book title + cover open the Details page */
+.book-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.book-title-link:hover,
+.book-title-link:focus {
+    color: var(--br-brass);
+    text-decoration: underline;
+}
+
+.book-cover-link {
+    display: block;
+}
+
+/* Author name on a book card links to the author's page */
+.author-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.author-link:hover,
+.author-link:focus {
+    color: var(--br-brass);
+    text-decoration: underline;
+}
+
 /* Book card: a volume on the shelf. Brass spine on hover-lift. */
 .book-card {
     position: relative;

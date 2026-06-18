@@ -61,7 +61,8 @@ else
 
                     <div class="flex-grow-1">
                         <div>
-                            <span class="fw-semibold">@update.FriendDisplayName</span>
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@update.FriendUserId"
+                               class="fw-semibold text-decoration-none">@update.FriendDisplayName</a>
                             @switch (update.Kind)
                             {
                                 case UpdateKind.Review:
