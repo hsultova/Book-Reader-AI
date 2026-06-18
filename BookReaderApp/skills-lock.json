@@ -7,6 +7,12 @@
       "skillPath": "skills/backend-frameworks/aspnet-signalr/SKILL.md",
       "computedHash": "d0c6f09a5ff91f2b420529dbfede9fb528baee60b786e8fee023dca7f0cc1869"
     },
+    "frontend-design": {
+      "source": "anthropics/claude-code",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-design/skills/frontend-design/SKILL.md",
+      "computedHash": "3e0be122a3db8206b6d0d6b07cca898b5c75fb9b7b2101abe143fb2851734d2e"
+    },
     "mvc-master": {
       "source": "gravito-framework/gravito",
       "sourceType": "github",

@@ -76,17 +76,15 @@ else
         @foreach (var book in Model.Author.Books.OrderBy(b => b.Title))
         {
             <div class="col">
-                <div class="card h-100">
+                <div class="card book-card h-100">
                     @if (!string.IsNullOrEmpty(book.CoverImageUrl))
                     {
-                        <img src="@book.CoverImageUrl" class="card-img-top"
-                             alt="Cover of @book.Title"
-                             style="height: 200px; object-fit: cover;" />
+                        <img src="@book.CoverImageUrl" class="book-cover"
+                             alt="Cover of @book.Title" loading="lazy" />
                     }
                     else
                     {
-                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted"
-                             style="height: 200px;">No cover</div>
+                        <div class="book-cover-empty">No cover</div>
                     }
                     <div class="card-body d-flex flex-column">
                         <h3 class="h6 card-title mb-1">@book.Title</h3>

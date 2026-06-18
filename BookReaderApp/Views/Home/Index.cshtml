@@ -23,13 +23,15 @@
 
 @if (Model is null)
 {
-    <div class="text-center py-5">
-        <h1 class="display-5 mb-3">Welcome to Book Reader</h1>
+    <div class="br-hero">
+        <div class="br-eyebrow">Your shelf, your reading life</div>
+        <h1>Every book you've read,<br />and everyone reading along.</h1>
         <p class="lead text-muted mb-4">
-            Log in to follow your friends' reviews, ratings and reading activity right here.
+            Track what you're reading, rate and review as you go, and follow your friends'
+            shelves and reviews — all in one quiet reading room.
         </p>
-        <a asp-controller="Account" asp-action="Login" class="btn btn-primary me-2">Log in</a>
-        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary">Register</a>
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">Start your shelf</a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-lg">Log in</a>
     </div>
 }
 else

@@ -33,11 +33,11 @@
     <div class="col-md-4">
         @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
         {
-            <img src="@Model.CoverImageUrl" class="img-fluid rounded" alt="Cover of @Model.Title" />
+            <img src="@Model.CoverImageUrl" class="book-cover-detail" alt="Cover of @Model.Title" />
         }
         else
         {
-            <div class="bg-light border rounded d-flex align-items-center justify-content-center text-muted" style="height: 300px;">No cover</div>
+            <div class="book-cover-empty book-cover-detail book-cover-detail-empty">No cover</div>
         }
     </div>
     <div class="col-md-8">

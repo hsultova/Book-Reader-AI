@@ -5,45 +5,55 @@
 
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
-        <div class="card">
+        <div class="card profile-card">
             <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="d-flex align-items-center gap-3">
                     @if (!string.IsNullOrEmpty(Model.ProfilePicturePath))
                     {
                         <img src="@Model.ProfilePicturePath" alt="@Model.DisplayName"
-                             class="rounded-circle object-fit-cover" width="96" height="96" />
+                             class="rounded-circle object-fit-cover profile-avatar flex-shrink-0" width="96" height="96" />
                     }
                     else
                     {
-                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                             style="width:96px;height:96px;font-size:2rem;">
+                        <div class="rounded-circle profile-avatar-fallback d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width:96px;height:96px;font-size:2rem;background-color:var(--br-forest);color:#F4ECD8;">
                             @(string.IsNullOrWhiteSpace(Model.DisplayName) ? "?" : Model.DisplayName.Trim()[0].ToString().ToUpper())
                         </div>
                     }
                     <div>
-                        <h1 class="h3 mb-0">@Model.DisplayName</h1>
+                        <h1 class="h3 profile-name">@Model.DisplayName</h1>
                         <small class="text-muted">Member since @Model.CreatedAt.ToString("MMMM yyyy")</small>
                     </div>
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(Model.Bio))
+                @if (!string.IsNullOrWhiteSpace(Model.Bio)
+                    || !string.IsNullOrWhiteSpace(Model.FavoriteGenre)
+                    || Model.ReadingGoal.HasValue)
                 {
-                    <h2 class="h6 text-muted">About me</h2>
-                    <p style="white-space: pre-wrap;">@Model.Bio</p>
+                    <hr class="profile-divider" />
                 }
 
-                <dl class="row mb-0">
-                    @if (!string.IsNullOrWhiteSpace(Model.FavoriteGenre))
-                    {
-                        <dt class="col-sm-4">Favorite genre</dt>
-                        <dd class="col-sm-8">@Model.FavoriteGenre</dd>
-                    }
-                    @if (Model.ReadingGoal.HasValue)
-                    {
-                        <dt class="col-sm-4">Reading goal</dt>
-                        <dd class="col-sm-8">@Model.ReadingGoal book(s) per year</dd>
-                    }
-                </dl>
+                @if (!string.IsNullOrWhiteSpace(Model.Bio))
+                {
+                    <span class="br-eyebrow profile-section-label">About me</span>
+                    <p class="profile-bio">@Model.Bio</p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.FavoriteGenre) || Model.ReadingGoal.HasValue)
+                {
+                    <dl class="profile-meta">
+                        @if (!string.IsNullOrWhiteSpace(Model.FavoriteGenre))
+                        {
+                            <dt>Favorite genre</dt>
+                            <dd>@Model.FavoriteGenre</dd>
+                        }
+                        @if (Model.ReadingGoal.HasValue)
+                        {
+                            <dt>Reading goal</dt>
+                            <dd>@Model.ReadingGoal book(s) per year</dd>
+                        }
+                    </dl>
+                }
 
                 @if (Model.IsOwnProfile)
                 {
