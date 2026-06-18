@@ -12,4 +12,10 @@ public class GenreRepository : EfRepository<Genre>, IGenreRepository
 
     public async Task<IReadOnlyList<Genre>> GetAllAsync() =>
         await Set.OrderBy(g => g.Name).ToListAsync();
+
+    public async Task<Genre?> GetByNameAsync(string name)
+    {
+        var normalized = name.Trim().ToLower();
+        return await Set.FirstOrDefaultAsync(g => g.Name.ToLower() == normalized);
+    }
 }

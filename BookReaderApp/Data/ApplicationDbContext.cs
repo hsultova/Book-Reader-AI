@@ -38,15 +38,28 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         // Required first: lets Identity configure its own schema before we add ours.
         base.OnModelCreating(builder);
 
+        builder.Entity<Author>(entity =>
+        {
+            // Author names are unique: the same author is stored once.
+            entity.HasIndex(a => a.Name).IsUnique();
+        });
+
         builder.Entity<Book>(entity =>
         {
             entity.HasOne(b => b.Author)
 				.WithMany(a => a.Books)
                 .HasForeignKey(b => b.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // A book is identified by its ISBN; the same book can't be added twice.
+            entity.HasIndex(b => b.Isbn).IsUnique();
         });
 
-        builder.Entity<Genre>();
+        builder.Entity<Genre>(entity =>
+        {
+            // Genre names are unique.
+            entity.HasIndex(g => g.Name).IsUnique();
+        });
 
         builder.Entity<UserBook>(entity =>
         {

@@ -37,6 +37,13 @@ public class BookService : IBookService
 
     public async Task<BookSaveResult> CreateBookAsync(BookFormViewModel model)
     {
+        // Reject duplicates up front: the same book (identified by ISBN) must not be added twice.
+        var isbn = model.Isbn.Trim();
+        if (await _books.GetByIsbnAsync(isbn) is not null)
+        {
+            return BookSaveResult.Duplicate(isbn);
+        }
+
         var authorId = await ResolveAuthorAsync(model);
         var genreId = await ResolveGenreAsync(model);
         var book = new Book();
@@ -59,9 +66,21 @@ public class BookService : IBookService
         var authorCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var genreCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+        // Track ISBNs already added in this batch so a value repeated across the selection
+        // isn't inserted twice (the DB check below only sees committed rows).
+        var seenIsbns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var model in models)
         {
             if (string.IsNullOrWhiteSpace(model.Isbn))
+            {
+                skipped.Add(string.IsNullOrWhiteSpace(model.Title) ? "(untitled)" : model.Title);
+                continue;
+            }
+
+            // Skip books already in the catalog, or duplicated within this same batch.
+            var isbn = model.Isbn.Trim();
+            if (!seenIsbns.Add(isbn) || await _books.GetByIsbnAsync(isbn) is not null)
             {
                 skipped.Add(string.IsNullOrWhiteSpace(model.Title) ? "(untitled)" : model.Title);
                 continue;
@@ -87,6 +106,14 @@ public class BookService : IBookService
         if (book is null)
         {
             return BookSaveResult.NotFound();
+        }
+
+        // Don't let an edit collide with a different book's ISBN.
+        var isbn = model.Isbn.Trim();
+        var existing = await _books.GetByIsbnAsync(isbn);
+        if (existing is not null && existing.Id != id)
+        {
+            return BookSaveResult.Duplicate(isbn);
         }
 
         var authorId = await ResolveAuthorAsync(model);
@@ -119,7 +146,14 @@ public class BookService : IBookService
         if (int.TryParse(model.AuthorValue, out var existingId) && existingId > 0)
             return existingId;
 
-        var author = new Author { Name = model.AuthorValue!.Trim() };
+        // A free-typed name reuses a matching author if one exists, so the same author
+        // isn't stored twice; only a genuinely new name creates a row.
+        var name = model.AuthorValue!.Trim();
+        var existing = await _authors.GetByNameAsync(name);
+        if (existing is not null)
+            return existing.Id;
+
+        var author = new Author { Name = name };
         await _authors.AddAsync(author);
         await _authors.SaveChangesAsync();
         return author.Id;
@@ -133,13 +167,20 @@ public class BookService : IBookService
         if (int.TryParse(model.GenreValue, out var existingId) && existingId > 0)
             return existingId;
 
-        var genre = new Genre { Name = model.GenreValue.Trim() };
+        // Reuse a matching genre if one exists rather than inserting a duplicate.
+        var name = model.GenreValue.Trim();
+        var existing = await _genres.GetByNameAsync(name);
+        if (existing is not null)
+            return existing.Id;
+
+        var genre = new Genre { Name = name };
         await _genres.AddAsync(genre);
         await _genres.SaveChangesAsync();
         return genre.Id;
     }
 
-    // Cache-aware variant for bulk create: dedupes new authors by name within the batch.
+    // Cache-aware variant for bulk create: reuses existing authors and dedupes new ones
+    // by name within the batch so a repeated name never produces duplicate rows.
     private async Task<int> ResolveAuthorAsync(BookFormViewModel model, Dictionary<string, int> cache)
     {
         if (int.TryParse(model.AuthorValue, out var existingId) && existingId > 0)
@@ -149,6 +190,13 @@ public class BookService : IBookService
         if (cache.TryGetValue(name, out var cachedId))
             return cachedId;
 
+        var existing = await _authors.GetByNameAsync(name);
+        if (existing is not null)
+        {
+            cache[name] = existing.Id;
+            return existing.Id;
+        }
+
         var author = new Author { Name = name };
         await _authors.AddAsync(author);
         await _authors.SaveChangesAsync();
@@ -156,7 +204,8 @@ public class BookService : IBookService
         return author.Id;
     }
 
-    // Cache-aware variant for bulk create: dedupes new genres by name within the batch.
+    // Cache-aware variant for bulk create: reuses existing genres and dedupes new ones
+    // by name within the batch.
     private async Task<int?> ResolveGenreAsync(BookFormViewModel model, Dictionary<string, int> cache)
     {
         if (string.IsNullOrWhiteSpace(model.GenreValue))
@@ -168,6 +217,13 @@ public class BookService : IBookService
         var name = model.GenreValue.Trim();
         if (cache.TryGetValue(name, out var cachedId))
             return cachedId;
+
+        var existing = await _genres.GetByNameAsync(name);
+        if (existing is not null)
+        {
+            cache[name] = existing.Id;
+            return existing.Id;
+        }
 
         var genre = new Genre { Name = name };
         await _genres.AddAsync(genre);

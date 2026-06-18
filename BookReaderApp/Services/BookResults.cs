@@ -11,6 +11,9 @@ public sealed record BookSaveResult(bool Succeeded, int? BookId, IReadOnlyList<s
     public static BookSaveResult NotFound() =>
         new(false, null, new[] { "The requested book was not found." });
 
+    public static BookSaveResult Duplicate(string isbn) =>
+        new(false, null, new[] { $"A book with ISBN '{isbn}' already exists in the catalog." });
+
     public static BookSaveResult Failure(IEnumerable<string> errors) =>
         new(false, null, errors.ToList());
 }

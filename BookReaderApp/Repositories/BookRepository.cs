@@ -64,4 +64,10 @@ public class BookRepository : EfRepository<Book>, IBookRepository
             .OrderBy(b => b.Title)
             .Take(take)
             .ToListAsync();
+
+    public async Task<Book?> GetByIsbnAsync(string isbn)
+    {
+        var normalized = isbn.Trim().ToLower();
+        return await Set.FirstOrDefaultAsync(b => b.Isbn.ToLower() == normalized);
+    }
 }

@@ -109,6 +109,83 @@ public class BookServiceTests
     }
 
     [Fact]
+    public async Task CreateBookAsync_WithDuplicateIsbn_FailsAndDoesNotPersist()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+        var authorId = await SeedAuthorAsync(context);
+        await service.CreateBookAsync(SampleForm(authorId));
+
+        // Same ISBN, different title — the same book must not be added again.
+        var duplicate = SampleForm(authorId);
+        duplicate.Title = "Clean Code (copy)";
+        var result = await service.CreateBookAsync(duplicate);
+
+        Assert.False(result.Succeeded);
+        Assert.NotEmpty(result.Errors);
+        Assert.Equal(1, await context.Books.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateBookAsync_WithNewAuthorName_ReusesExistingAuthor()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+        context.Authors.Add(new Author { Name = "Martin Fowler" });
+        await context.SaveChangesAsync();
+
+        // Author typed by name (not selected by id) and casing/whitespace differs.
+        var form = SampleForm(0);
+        form.AuthorValue = "  martin fowler  ";
+        var result = await service.CreateBookAsync(form);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, await context.Authors.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateBooks_WithDuplicateIsbn_SkipsRepeats()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+
+        var models = new[]
+        {
+            new BookFormViewModel { Title = "First", AuthorValue = "Author A", Isbn = "111" },
+            new BookFormViewModel { Title = "Repeat in batch", AuthorValue = "Author A", Isbn = "111" }
+        };
+
+        var result = await service.CreateBooksAsync(models);
+
+        Assert.Equal(1, result.CreatedCount);
+        Assert.Equal(new[] { "Repeat in batch" }, result.SkippedTitles);
+        Assert.Equal(1, await context.Books.CountAsync());
+    }
+
+    [Fact]
+    public async Task UpdateBookAsync_WithIsbnOfAnotherBook_FailsAsDuplicate()
+    {
+        using var context = NewContext();
+        var service = NewService(context);
+        var authorId = await SeedAuthorAsync(context);
+
+        var first = await service.CreateBookAsync(SampleForm(authorId));
+        var second = SampleForm(authorId);
+        second.Title = "Another Book";
+        second.Isbn = "999-different";
+        var secondCreated = await service.CreateBookAsync(second);
+
+        // Try to point the second book at the first book's ISBN.
+        var edit = SampleForm(authorId);
+        edit.Title = "Another Book";
+        var result = await service.UpdateBookAsync(secondCreated.BookId!.Value, edit);
+
+        Assert.False(result.Succeeded);
+        Assert.NotEmpty(result.Errors);
+        Assert.True(string.IsNullOrEmpty(first.Errors.FirstOrDefault()));
+    }
+
+    [Fact]
     public async Task GetBookByIdAsync_WithMissingId_ReturnsNull()
     {
         using var context = NewContext();
@@ -186,6 +263,7 @@ public class BookServiceTests
         {
             var form = SampleForm(authorId);
             form.Title = $"Book {i}";
+            form.Isbn = $"isbn-{i}"; // each catalog book needs a distinct ISBN
             await service.CreateBookAsync(form);
         }
 

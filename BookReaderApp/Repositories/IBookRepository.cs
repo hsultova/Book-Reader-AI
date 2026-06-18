@@ -15,4 +15,8 @@ public interface IBookRepository : IRepository<Book>
     // given book ids. Ordered by title, capped at take. Used to build recommendation rows.
     Task<IReadOnlyList<Book>> GetSimilarAsync(
         int authorId, int? genreId, IReadOnlyCollection<int> excludeBookIds, int take);
+
+    // Looks up a catalog book by ISBN (trimmed, case-insensitive) so callers can reject
+    // adding the same book twice. Returns null when no book has that ISBN.
+    Task<Book?> GetByIsbnAsync(string isbn);
 }

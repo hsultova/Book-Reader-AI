@@ -18,4 +18,10 @@ public class AuthorRepository : EfRepository<Author>, IAuthorRepository
             .Include(a => a.Books)
                 .ThenInclude(b => b.Genre)
             .FirstOrDefaultAsync(a => a.Id == id);
+
+    public async Task<Author?> GetByNameAsync(string name)
+    {
+        var normalized = name.Trim().ToLower();
+        return await Set.FirstOrDefaultAsync(a => a.Name.ToLower() == normalized);
+    }
 }
