@@ -31,6 +31,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Follow> Follows => Set<Follow>();
 
+    public DbSet<AuthorFollow> AuthorFollows => Set<AuthorFollow>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // Required first: lets Identity configure its own schema before we add ours.
@@ -162,6 +164,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // At most one follow per ordered pair.
             entity.HasIndex(f => new { f.FollowerId, f.FolloweeId }).IsUnique();
+        });
+
+        builder.Entity<AuthorFollow>(entity =>
+        {
+            entity.HasOne(af => af.Author)
+                .WithMany(a => a.Followers)
+                .HasForeignKey(af => af.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Restrict on the user side to avoid multiple cascade paths to AspNetUsers.
+            entity.HasOne(af => af.User)
+                .WithMany()
+                .HasForeignKey(af => af.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // A user can follow a given author only once.
+            entity.HasIndex(af => new { af.UserId, af.AuthorId }).IsUnique();
         });
     }
 }

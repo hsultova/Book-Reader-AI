@@ -1,0 +1,110 @@
+@using BookReaderApp.Models
+@model BookReaderApp.Models.ViewModels.AuthorDetailViewModel
+@{
+    ViewData["Title"] = Model.Author.Name;
+}
+
+<div class="row mb-4">
+    <div class="col-md-3 text-center">
+        @if (!string.IsNullOrEmpty(Model.Author.Photo))
+        {
+            <img src="@Model.Author.Photo" alt="Photo of @Model.Author.Name"
+                 class="img-fluid rounded-circle mb-3"
+                 style="width: 180px; height: 180px; object-fit: cover;" />
+        }
+        else
+        {
+            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-3"
+                 style="width:180px;height:180px;font-size:3rem;">
+                @(Model.Author.Name.Trim()[0].ToString().ToUpper())
+            </div>
+        }
+        <div class="text-muted small mb-2">
+            <strong>@Model.FollowerCount</strong> @(Model.FollowerCount == 1 ? "follower" : "followers")
+        </div>
+        @if (Model.IsAuthenticated)
+        {
+            @if (Model.IsFollowing)
+            {
+                <form asp-controller="Authors" asp-action="Unfollow" method="post">
+                    <input type="hidden" name="id" value="@Model.Author.Id" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        Unfollow
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form asp-controller="Authors" asp-action="Follow" method="post">
+                    <input type="hidden" name="id" value="@Model.Author.Id" />
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Follow
+                    </button>
+                </form>
+            }
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login"
+               asp-route-returnUrl="@Context.Request.Path"
+               class="btn btn-outline-primary btn-sm">Login to follow</a>
+        }
+    </div>
+
+    <div class="col-md-9">
+        <h1 class="h2">@Model.Author.Name</h1>
+        @if (!string.IsNullOrEmpty(Model.Author.Description))
+        {
+            <p style="white-space: pre-wrap;">@Model.Author.Description</p>
+        }
+        else
+        {
+            <p class="text-muted fst-italic">No biography available.</p>
+        }
+    </div>
+</div>
+
+<h2 class="h4 mb-3">Books by @Model.Author.Name</h2>
+
+@if (!Model.Author.Books.Any())
+{
+    <p class="text-muted">No books in the catalog yet.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+        @foreach (var book in Model.Author.Books.OrderBy(b => b.Title))
+        {
+            <div class="col">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                    {
+                        <img src="@book.CoverImageUrl" class="card-img-top"
+                             alt="Cover of @book.Title"
+                             style="height: 200px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center text-muted"
+                             style="height: 200px;">No cover</div>
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <h3 class="h6 card-title mb-1">@book.Title</h3>
+                        @if (!string.IsNullOrEmpty(book.Genre?.Name))
+                        {
+                            <span class="badge bg-secondary align-self-start mb-2">@book.Genre.Name</span>
+                        }
+                        <div class="mt-auto">
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@book.Id"
+                               class="btn btn-sm btn-outline-primary">Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="mt-4">
+    <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary">Back to books</a>
+</div>

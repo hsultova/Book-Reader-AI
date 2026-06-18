@@ -12,4 +12,10 @@ public class AuthorRepository : EfRepository<Author>, IAuthorRepository
 
     public async Task<IReadOnlyList<Author>> GetAllAsync() =>
         await Set.OrderBy(a => a.Name).ToListAsync();
+
+    public async Task<Author?> GetWithBooksAsync(int id) =>
+        await Set
+            .Include(a => a.Books)
+                .ThenInclude(b => b.Genre)
+            .FirstOrDefaultAsync(a => a.Id == id);
 }

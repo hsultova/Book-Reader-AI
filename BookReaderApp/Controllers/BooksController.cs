@@ -78,12 +78,22 @@ public class BooksController : Controller
         ViewData["ReviewLikeCounts"] = await _reviewLikeService.GetLikeCountsAsync(reviewIds);
         ViewData["ReviewComments"] = await _reviewCommentService.GetCommentsForReviewsAsync(reviewIds);
 
+        // Author section: follower count is public; follow state requires login.
+        if (book.Author is not null)
+        {
+            ViewData["AuthorFollowerCount"] = await _authorService.GetFollowerCountAsync(book.AuthorId);
+        }
+
         if (User.Identity?.IsAuthenticated == true)
         {
             var userId = _userManager.GetUserId(User)!;
             ViewData["CurrentUserId"] = userId;
             ViewData["UserReview"] = await _reviewService.GetUserReviewAsync(userId, book.Id);
             ViewData["ReviewLikedIds"] = await _reviewLikeService.GetLikedReviewIdsAsync(userId, reviewIds);
+            if (book.Author is not null)
+            {
+                ViewData["IsFollowingAuthor"] = await _authorService.IsFollowingAsync(userId, book.AuthorId);
+            }
         }
 
         return View(book);
