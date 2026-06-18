@@ -84,8 +84,10 @@ Controllers  →  Services  →  Repositories  →  DbContext
 - All I/O is **async** (`Task<T>`, `async`/`await`) — never `.Result` or `.Wait()`.
 - List endpoints paginate via a shared `PagedResult<T>` wrapper (default 20 items per page).
 
-See [`AGENTS.md`](AGENTS.md) for the full architecture vision and code standards, and
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for additional detail.
+See [`AGENTS.md`](AGENTS.md) for the full architecture vision and code standards,
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the as-built architecture, and
+[`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) for a contributor walkthrough (layout,
+how to add a feature, and a full route reference).
 
 ---
 
