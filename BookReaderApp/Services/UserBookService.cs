@@ -109,4 +109,10 @@ public class UserBookService : IUserBookService
 
     public Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(IEnumerable<int> bookIds) =>
         _userBooks.GetRatingSummariesAsync(bookIds);
+
+    public Task<IReadOnlyDictionary<ReadingStatus, int>> GetStatusCountsAsync(int bookId) =>
+        _userBooks.GetStatusCountsAsync(bookId);
+
+    public Task<IReadOnlyList<ReaderAvatar>> GetStatusReadersAsync(int bookId, ReadingStatus status, int take) =>
+        _userBooks.GetStatusReadersAsync(bookId, status, take);
 }

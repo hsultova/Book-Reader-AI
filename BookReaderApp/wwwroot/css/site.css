@@ -301,6 +301,41 @@ a:focus-visible {
     aspect-ratio: 2 / 3;
 }
 
+/* ---------- Reader avatar stack (book Details reader stats) ---------- */
+.avatar-stack {
+    display: inline-flex;
+}
+
+.avatar-stack-item {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-left: -10px;            /* overlap the neighbour to the left */
+    border: 2px solid var(--br-surface, #fff);
+    overflow: hidden;
+    background-color: var(--br-paper-2, #6c757d);
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.avatar-stack-item:first-child {
+    margin-left: 0;                /* leftmost sits flush */
+}
+
+.avatar-stack-item img,
+.avatar-stack-item .avatar-initial {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background-color: var(--br-forest, #6c757d);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 /* ---------- "Because you enjoyed..." recommendation strips ---------- */
 .recommendation-row {
     scroll-snap-type: x proximity;

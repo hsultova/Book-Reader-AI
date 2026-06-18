@@ -77,4 +77,24 @@ public class UserBookRepository : EfRepository<UserBook>, IUserBookRepository
 
         return summaries.ToDictionary(s => s.BookId, s => new RatingSummary(s.Average, s.Count));
     }
+
+    public async Task<IReadOnlyDictionary<ReadingStatus, int>> GetStatusCountsAsync(int bookId)
+    {
+        var counts = await Set
+            .Where(ub => ub.BookId == bookId && ub.Status != null)
+            .GroupBy(ub => ub.Status!.Value)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.Status, c => c.Count);
+    }
+
+    public async Task<IReadOnlyList<ReaderAvatar>> GetStatusReadersAsync(
+        int bookId, ReadingStatus status, int take) =>
+        await Set
+            .Where(ub => ub.BookId == bookId && ub.Status == status)
+            .OrderByDescending(ub => ub.AddedAt)
+            .Take(take)
+            .Select(ub => new ReaderAvatar(ub.UserId, ub.User!.DisplayName, ub.User.ProfilePicturePath))
+            .ToListAsync();
 }

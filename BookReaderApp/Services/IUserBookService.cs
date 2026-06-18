@@ -23,4 +23,12 @@ public interface IUserBookService
 
     // Average rating and rating count per book, across all users, for the given books.
     Task<IReadOnlyDictionary<int, RatingSummary>> GetRatingSummariesAsync(IEnumerable<int> bookIds);
+
+    // How many users currently have the book on a shelf with each reading status, across all
+    // users. Statuses with no users are omitted from the result.
+    Task<IReadOnlyDictionary<ReadingStatus, int>> GetStatusCountsAsync(int bookId);
+
+    // A sample of users (newest shelf addition first) who currently have the book on a shelf
+    // with the given status. Drives the avatar stack on the book Details page.
+    Task<IReadOnlyList<ReaderAvatar>> GetStatusReadersAsync(int bookId, ReadingStatus status, int take);
 }

@@ -27,6 +27,17 @@
         ?? new Dictionary<int, IReadOnlyList<ReviewComment>>();
     var authorFollowerCount = ViewData["AuthorFollowerCount"] is int afc ? afc : 0;
     var isFollowingAuthor = ViewData["IsFollowingAuthor"] is bool ifa && ifa;
+    var readingCount = ViewData["ReadingCount"] is int rc ? rc : 0;
+    var wantToReadCount = ViewData["WantToReadCount"] is int wc ? wc : 0;
+    var readingAvatars = ViewData["ReadingAvatars"] as IReadOnlyList<ReaderAvatar>
+        ?? Array.Empty<ReaderAvatar>();
+    var wantToReadAvatars = ViewData["WantToReadAvatars"] as IReadOnlyList<ReaderAvatar>
+        ?? Array.Empty<ReaderAvatar>();
+}
+
+@functions {
+    static string Initial(string name) =>
+        string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[0].ToString().ToUpperInvariant();
 }
 
 <div class="row">
@@ -56,6 +67,58 @@
         </p>
         <div class="mb-3">
             <partial name="_StarRating" model="@(new StarRatingViewModel { BookId = Model.Id, UserRating = placement?.Rating, Summary = ratingSummary, ReturnUrl = returnUrl, CanRate = isAuthenticated && placement is not null })" />
+        </div>
+        <div class="d-flex flex-wrap gap-4 mb-3 reader-stats">
+            <div class="d-flex align-items-center gap-2">
+                @if (readingAvatars.Count > 0)
+                {
+                    <div class="avatar-stack">
+                        @foreach (var reader in readingAvatars)
+                        {
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@reader.UserId"
+                               class="avatar-stack-item" title="@reader.DisplayName">
+                                @if (!string.IsNullOrEmpty(reader.ProfilePicturePath))
+                                {
+                                    <img src="@reader.ProfilePicturePath" alt="@reader.DisplayName" />
+                                }
+                                else
+                                {
+                                    <span class="avatar-initial">@Initial(reader.DisplayName)</span>
+                                }
+                            </a>
+                        }
+                    </div>
+                }
+                <div>
+                    <span class="fw-semibold">@readingCount.ToString("N0")</span>
+                    <span class="text-muted">@(readingCount == 1 ? "person is" : "people are") currently reading</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                @if (wantToReadAvatars.Count > 0)
+                {
+                    <div class="avatar-stack">
+                        @foreach (var reader in wantToReadAvatars)
+                        {
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@reader.UserId"
+                               class="avatar-stack-item" title="@reader.DisplayName">
+                                @if (!string.IsNullOrEmpty(reader.ProfilePicturePath))
+                                {
+                                    <img src="@reader.ProfilePicturePath" alt="@reader.DisplayName" />
+                                }
+                                else
+                                {
+                                    <span class="avatar-initial">@Initial(reader.DisplayName)</span>
+                                }
+                            </a>
+                        }
+                    </div>
+                }
+                <div>
+                    <span class="fw-semibold">@wantToReadCount.ToString("N0")</span>
+                    <span class="text-muted">@(wantToReadCount == 1 ? "person wants" : "people want") to read</span>
+                </div>
+            </div>
         </div>
         <dl class="row">
             <dt class="col-sm-3">ISBN</dt>

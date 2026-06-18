@@ -87,6 +87,17 @@ public class BooksController : Controller
 
         await PopulateShelfStatusesAsync(new[] { book.Id });
 
+        // Reader stats are public: how many users are reading / want to read this book, plus a
+        // few sample faces for the avatar stacks.
+        const int avatarSampleSize = 3;
+        var statusCounts = await _userBookService.GetStatusCountsAsync(book.Id);
+        ViewData["ReadingCount"] = statusCounts.GetValueOrDefault(ReadingStatus.Reading);
+        ViewData["WantToReadCount"] = statusCounts.GetValueOrDefault(ReadingStatus.WantToRead);
+        ViewData["ReadingAvatars"] = await _userBookService.GetStatusReadersAsync(
+            book.Id, ReadingStatus.Reading, avatarSampleSize);
+        ViewData["WantToReadAvatars"] = await _userBookService.GetStatusReadersAsync(
+            book.Id, ReadingStatus.WantToRead, avatarSampleSize);
+
         // Reviews are shown to everyone; the user's own review (if any) prefills the edit form.
         var reviews = await _reviewService.GetForBookAsync(book.Id);
         var reviewIds = reviews.Select(r => r.Id).ToList();
