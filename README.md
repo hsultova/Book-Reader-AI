@@ -154,13 +154,18 @@ layers, mocking external dependencies with Moq and using EF Core's InMemory prov
 
 ---
 ## UI screenshots
-
-<img width="1911" height="940" alt="image" src="https://github.com/user-attachments/assets/7fbf00cb-1985-47f0-9ba9-0e9a557ee720" />
-<img width="1879" height="935" alt="image" src="https://github.com/user-attachments/assets/10826740-4177-4bff-a930-0c17bc371ab0" />
-<img width="1906" height="923" alt="image" src="https://github.com/user-attachments/assets/909d6f0b-edf7-479b-86d2-c60a5ed8e596" />
-
-
-
+<img width="1895" height="951" alt="Screenshot 2026-06-18 165637" src="https://github.com/user-attachments/assets/72b1e19d-d992-40c9-a3b1-a570b7c7ee99" />
+<img width="1363" height="945" alt="Screenshot 2026-06-18 165725" src="https://github.com/user-attachments/assets/c7b92fe9-56a4-4560-aa9d-2cbf5afb469d" />
+<img width="1891" height="946" alt="Screenshot 2026-06-18 165740" src="https://github.com/user-attachments/assets/c2860d4d-ee58-4ed5-a437-f2bb4082ed48" />
+<img width="482" height="579" alt="Screenshot 2026-06-19 105432" src="https://github.com/user-attachments/assets/0ccf7e56-596f-49cb-9dc6-3cbd6c355ce6" />
+<img width="798" height="423" alt="Screenshot 2026-06-18 165752" src="https://github.com/user-attachments/assets/33addec3-f7d5-4323-8c94-7a8bbb988b6c" />
+<img width="1865" height="948" alt="Screenshot 2026-06-18 165850" src="https://github.com/user-attachments/assets/f9039c00-b6fd-4544-8c2a-1a7f16b0b757" />
+<img width="718" height="746" alt="Screenshot 2026-06-18 165926" src="https://github.com/user-attachments/assets/2d74866b-34ce-4ed2-9ace-474489106f2c" />
+<img width="685" height="781" alt="Screenshot 2026-06-18 170003" src="https://github.com/user-attachments/assets/9c447f77-41e8-4882-ad09-68dd6e32c139" />
+<img width="678" height="605" alt="Screenshot 2026-06-18 170015" src="https://github.com/user-attachments/assets/fe26a9fd-ed5f-42ea-9906-7e5a8c5d25da" />
+<img width="1894" height="944" alt="Screenshot 2026-06-18 192305" src="https://github.com/user-attachments/assets/c574275b-72e4-480a-98df-897ff30a077d" />
+<img width="1871" height="944" alt="Screenshot 2026-06-18 205727" src="https://github.com/user-attachments/assets/311d6f53-cd13-4cf4-a770-f1bdac38f5b1" />
+<img width="600" height="592" alt="Screenshot 2026-06-19 103849" src="https://github.com/user-attachments/assets/8ab256c5-cf0f-4d28-9071-f98e88a46c67" />
 
 ## License
 
