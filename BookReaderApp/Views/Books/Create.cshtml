@@ -56,11 +56,11 @@
             placeholder: 'Select or type an author name...',
             maxOptions: null
         });
-        const genreSelect = new TomSelect('#GenreValue', {
+        const genreSelect = new TomSelect('#GenreValues', {
             create: true,
             createOnBlur: true,
             persist: false,
-            placeholder: 'Select or type a genre...',
+            placeholder: 'Select or type one or more genres...',
             maxOptions: null
         });
 
@@ -83,7 +83,8 @@
             document.getElementById('CoverImageUrl').value = book.coverImageUrl || '';
             document.getElementById('Description').value = book.description || '';
             applyChoice(authorSelect, book.author);
-            applyChoice(genreSelect, book.genre);
+            genreSelect.clear(true);
+            (book.genres || []).forEach(g => applyChoice(genreSelect, g));
             window.scrollTo({ top: document.querySelector('form').offsetTop, behavior: 'smooth' });
         }
 
@@ -204,7 +205,7 @@
                     Isbn: book.isbn,
                     CoverImageUrl: book.coverImageUrl,
                     Description: book.description,
-                    GenreValue: book.genre
+                    GenreValues: book.genres || []
                 };
             });
 

@@ -17,4 +17,7 @@ public class GenreService : IGenreService
 
     public Task<Genre?> GetGenreByIdAsync(int id) =>
         _genres.GetByIdAsync(id);
+
+    public Task<Genre?> GetGenreWithBooksAsync(int id) =>
+        _genres.GetWithBooksAsync(id);
 }

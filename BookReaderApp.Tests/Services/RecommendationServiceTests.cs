@@ -53,9 +53,9 @@ public class RecommendationServiceTests
         var genre = new Genre { Name = "Sci-Fi" };
         context.Authors.Add(author);
         context.Genres.Add(genre);
-        var dune = new Book { Title = "Dune", AuthorId = author.Id, GenreId = genre.Id, Isbn = "1" };
+        var dune = new Book { Title = "Dune", AuthorId = author.Id, Genres = { genre }, Isbn = "1" };
         var sameAuthor = new Book { Title = "Dune Messiah", AuthorId = author.Id, Isbn = "2" };
-        var sameGenre = new Book { Title = "Neuromancer", AuthorId = author.Id, GenreId = genre.Id, Isbn = "3" };
+        var sameGenre = new Book { Title = "Neuromancer", AuthorId = author.Id, Genres = { genre }, Isbn = "3" };
         context.Books.AddRange(dune, sameAuthor, sameGenre);
         Rate(context, dune, rating: 5);
         await context.SaveChangesAsync();
@@ -100,10 +100,10 @@ public class RecommendationServiceTests
         context.Authors.Add(author);
         context.Genres.Add(genre);
         // Two highly-rated sources that share the same genre.
-        var dune = new Book { Title = "Dune", AuthorId = author.Id, GenreId = genre.Id, Isbn = "1" };
-        var foundation = new Book { Title = "Foundation", AuthorId = author.Id, GenreId = genre.Id, Isbn = "2" };
+        var dune = new Book { Title = "Dune", AuthorId = author.Id, Genres = { genre }, Isbn = "1" };
+        var foundation = new Book { Title = "Foundation", AuthorId = author.Id, Genres = { genre }, Isbn = "2" };
         // A single candidate that matches both sources' genre.
-        var candidate = new Book { Title = "Hyperion", AuthorId = author.Id, GenreId = genre.Id, Isbn = "3" };
+        var candidate = new Book { Title = "Hyperion", AuthorId = author.Id, Genres = { genre }, Isbn = "3" };
         context.Books.AddRange(dune, foundation, candidate);
         Rate(context, dune, rating: 5);
         Rate(context, foundation, rating: 4);

@@ -11,10 +11,10 @@ public interface IBookRepository : IRepository<Book>
     Task<PagedResult<Book>> SearchPagedAsync(
         string? query, int page, int pageSize = PagedResult<Book>.DefaultPageSize);
 
-    // Books "similar" to a source book: same author OR (when set) same genre, excluding the
-    // given book ids. Ordered by title, capped at take. Used to build recommendation rows.
+    // Books "similar" to a source book: same author OR sharing any of the given genres,
+    // excluding the given book ids. Ordered by title, capped at take. Builds recommendation rows.
     Task<IReadOnlyList<Book>> GetSimilarAsync(
-        int authorId, int? genreId, IReadOnlyCollection<int> excludeBookIds, int take);
+        int authorId, IReadOnlyCollection<int> genreIds, IReadOnlyCollection<int> excludeBookIds, int take);
 
     // Looks up a catalog book by ISBN (trimmed, case-insensitive) so callers can reject
     // adding the same book twice. Returns null when no book has that ISBN.

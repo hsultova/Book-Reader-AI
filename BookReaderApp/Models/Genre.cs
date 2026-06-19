@@ -9,4 +9,7 @@ public class Genre
     [Required]
     [StringLength(60)]
     public string Name { get; set; } = string.Empty;
+
+    // Inverse side of the Book<->Genre many-to-many.
+    public ICollection<Book> Books { get; set; } = new List<Book>();
 }

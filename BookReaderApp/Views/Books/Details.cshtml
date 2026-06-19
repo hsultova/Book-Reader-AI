@@ -123,10 +123,18 @@
         <dl class="row">
             <dt class="col-sm-3">ISBN</dt>
             <dd class="col-sm-9">@Model.Isbn</dd>
-            @if (!string.IsNullOrEmpty(Model.Genre?.Name))
+            @if (Model.Genres.Any())
             {
-                <dt class="col-sm-3">Genre</dt>
-                <dd class="col-sm-9">@Model.Genre.Name</dd>
+                <dt class="col-sm-3">@(Model.Genres.Count == 1 ? "Genre" : "Genres")</dt>
+                <dd class="col-sm-9">
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var genre in Model.Genres.OrderBy(g => g.Name))
+                        {
+                            <a asp-controller="Genres" asp-action="Details" asp-route-id="@genre.Id"
+                               class="badge bg-secondary text-decoration-none">@genre.Name</a>
+                        }
+                    </div>
+                </dd>
             }
         </dl>
         @if (!string.IsNullOrEmpty(Model.Description))

@@ -18,4 +18,10 @@ public class GenreRepository : EfRepository<Genre>, IGenreRepository
         var normalized = name.Trim().ToLower();
         return await Set.FirstOrDefaultAsync(g => g.Name.ToLower() == normalized);
     }
+
+    public async Task<Genre?> GetWithBooksAsync(int id) =>
+        await Set
+            .Include(g => g.Books)
+                .ThenInclude(b => b.Author)
+            .FirstOrDefaultAsync(g => g.Id == id);
 }

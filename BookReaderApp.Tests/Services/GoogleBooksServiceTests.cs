@@ -72,7 +72,7 @@ public class GoogleBooksServiceTests
         Assert.Equal("Robert C. Martin", book.Author);
         Assert.Equal("9780132350884", book.Isbn); // ISBN_13 preferred over ISBN_10
         Assert.Equal("https://books.google.com/thumb.jpg", book.CoverImageUrl); // http -> https
-        Assert.Equal("Computers", book.Genre);
+        Assert.Equal(new[] { "Computers", "Other" }, book.Genres); // all categories imported
         Assert.Equal("A handbook of agile software craftsmanship.", book.Description);
     }
 

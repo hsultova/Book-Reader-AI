@@ -46,8 +46,9 @@ public class RecommendationService : IRecommendationService
                 continue;
             }
 
+            var genreIds = source.Genres.Select(g => g.Id).ToList();
             var similar = await _books.GetSimilarAsync(
-                source.AuthorId, source.GenreId, excluded, BooksPerGroup);
+                source.AuthorId, genreIds, excluded, BooksPerGroup);
             if (similar.Count == 0)
             {
                 continue;

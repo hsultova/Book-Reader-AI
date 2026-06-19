@@ -45,9 +45,9 @@ public class BookService : IBookService
         }
 
         var authorId = await ResolveAuthorAsync(model);
-        var genreId = await ResolveGenreAsync(model);
+        var genres = await ResolveGenresAsync(model);
         var book = new Book();
-        Apply(model, book, authorId, genreId);
+        Apply(model, book, authorId, genres);
 
         await _books.AddAsync(book);
         await _books.SaveChangesAsync();
@@ -64,7 +64,7 @@ public class BookService : IBookService
         // Cache name -> id within the batch so a repeated author/genre name doesn't
         // create duplicate rows (the per-name resolvers below always insert otherwise).
         var authorCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var genreCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var genreCache = new Dictionary<string, Genre>(StringComparer.OrdinalIgnoreCase);
 
         // Track ISBNs already added in this batch so a value repeated across the selection
         // isn't inserted twice (the DB check below only sees committed rows).
@@ -87,9 +87,9 @@ public class BookService : IBookService
             }
 
             var authorId = await ResolveAuthorAsync(model, authorCache);
-            var genreId = await ResolveGenreAsync(model, genreCache);
+            var genres = await ResolveGenresAsync(model, genreCache);
             var book = new Book();
-            Apply(model, book, authorId, genreId);
+            Apply(model, book, authorId, genres);
 
             await _books.AddAsync(book);
             await _books.SaveChangesAsync();
@@ -117,8 +117,8 @@ public class BookService : IBookService
         }
 
         var authorId = await ResolveAuthorAsync(model);
-        var genreId = await ResolveGenreAsync(model);
-        Apply(model, book, authorId, genreId);
+        var genres = await ResolveGenresAsync(model);
+        Apply(model, book, authorId, genres);
         _books.Update(book);
         await _books.SaveChangesAsync();
 
@@ -159,24 +159,48 @@ public class BookService : IBookService
         return author.Id;
     }
 
-    private async Task<int?> ResolveGenreAsync(BookFormViewModel model)
+    // Resolves the form's genre values (each an existing id or a free-typed name) to a
+    // deduplicated list of Genre entities. Reuses matching genres rather than inserting
+    // duplicates; only a genuinely new name creates a row.
+    private async Task<List<Genre>> ResolveGenresAsync(BookFormViewModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.GenreValue))
-            return null;
+        var resolved = new List<Genre>();
+        var seenIds = new HashSet<int>();
+        var seenNewNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (int.TryParse(model.GenreValue, out var existingId) && existingId > 0)
-            return existingId;
+        foreach (var value in model.GenreValues)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
 
-        // Reuse a matching genre if one exists rather than inserting a duplicate.
-        var name = model.GenreValue.Trim();
-        var existing = await _genres.GetByNameAsync(name);
-        if (existing is not null)
-            return existing.Id;
+            if (int.TryParse(value, out var existingId) && existingId > 0)
+            {
+                var byId = await _genres.GetByIdAsync(existingId);
+                if (byId is not null && seenIds.Add(byId.Id))
+                    resolved.Add(byId);
+                continue;
+            }
 
-        var genre = new Genre { Name = name };
-        await _genres.AddAsync(genre);
-        await _genres.SaveChangesAsync();
-        return genre.Id;
+            var name = value.Trim();
+            var existing = await _genres.GetByNameAsync(name);
+            if (existing is not null)
+            {
+                if (seenIds.Add(existing.Id))
+                    resolved.Add(existing);
+                continue;
+            }
+
+            // New name: dedupe within this submission before inserting.
+            if (!seenNewNames.Add(name))
+                continue;
+
+            var genre = new Genre { Name = name };
+            await _genres.AddAsync(genre);
+            await _genres.SaveChangesAsync();
+            resolved.Add(genre);
+        }
+
+        return resolved;
     }
 
     // Cache-aware variant for bulk create: reuses existing authors and dedupes new ones
@@ -205,40 +229,54 @@ public class BookService : IBookService
     }
 
     // Cache-aware variant for bulk create: reuses existing genres and dedupes new ones
-    // by name within the batch.
-    private async Task<int?> ResolveGenreAsync(BookFormViewModel model, Dictionary<string, int> cache)
+    // by name within the batch so a repeated name never produces duplicate rows.
+    private async Task<List<Genre>> ResolveGenresAsync(BookFormViewModel model, Dictionary<string, Genre> cache)
     {
-        if (string.IsNullOrWhiteSpace(model.GenreValue))
-            return null;
+        var resolved = new List<Genre>();
 
-        if (int.TryParse(model.GenreValue, out var existingId) && existingId > 0)
-            return existingId;
-
-        var name = model.GenreValue.Trim();
-        if (cache.TryGetValue(name, out var cachedId))
-            return cachedId;
-
-        var existing = await _genres.GetByNameAsync(name);
-        if (existing is not null)
+        foreach (var value in model.GenreValues)
         {
-            cache[name] = existing.Id;
-            return existing.Id;
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            Genre? genre;
+            if (int.TryParse(value, out var existingId) && existingId > 0)
+            {
+                genre = await _genres.GetByIdAsync(existingId);
+            }
+            else
+            {
+                var name = value.Trim();
+                if (!cache.TryGetValue(name, out genre))
+                {
+                    genre = await _genres.GetByNameAsync(name);
+                    if (genre is null)
+                    {
+                        genre = new Genre { Name = name };
+                        await _genres.AddAsync(genre);
+                        await _genres.SaveChangesAsync();
+                    }
+                    cache[name] = genre;
+                }
+            }
+
+            // Cache and GetByIdAsync return the tracked instance, so reference identity
+            // dedupes a genre referenced twice in the same book.
+            if (genre is not null && !resolved.Contains(genre))
+                resolved.Add(genre);
         }
 
-        var genre = new Genre { Name = name };
-        await _genres.AddAsync(genre);
-        await _genres.SaveChangesAsync();
-        cache[name] = genre.Id;
-        return genre.Id;
+        return resolved;
     }
 
-    private static void Apply(BookFormViewModel model, Book book, int authorId, int? genreId)
+    private static void Apply(BookFormViewModel model, Book book, int authorId, List<Genre> genres)
     {
         book.Title = model.Title;
         book.AuthorId = authorId;
         book.Isbn = model.Isbn;
         book.CoverImageUrl = model.CoverImageUrl;
         book.Description = model.Description;
-        book.GenreId = genreId;
+        // Reassigning the (loaded) collection reconciles join rows on update.
+        book.Genres = genres;
     }
 }

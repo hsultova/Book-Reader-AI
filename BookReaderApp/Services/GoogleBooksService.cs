@@ -13,6 +13,7 @@ public class GoogleBooksService : IGoogleBooksService
     private const int MaxTitle = 200;
     private const int MaxIsbn = 20;
     private const int MaxDescription = 2000;
+    private const int MaxGenre = 60; // Matches the Genre.Name column limit.
     private const int MaxResults = 40; // Google Books caps a single request at 40.
 
     private readonly HttpClient _http;
@@ -91,7 +92,7 @@ public class GoogleBooksService : IGoogleBooksService
                 Isbn: ExtractIsbn(info),
                 CoverImageUrl: ExtractCover(info),
                 Description: Truncate(GetString(info, "description"), MaxDescription),
-                Genre: FirstOf(info, "categories")));
+                Genres: AllCategories(info)));
         }
 
         // Surface books that have an ISBN first — only those can be bulk-created. OrderBy is a
@@ -156,6 +157,39 @@ public class GoogleBooksService : IGoogleBooksService
         }
 
         return null;
+    }
+
+    // Collects every Google Books "categories" entry as a distinct genre. Google often
+    // packs a hierarchy into one string ("Fiction / Fantasy / Epic"); we split those on
+    // '/' so each level becomes its own tag. Case-insensitive dedupe preserves order.
+    private static IReadOnlyList<string> AllCategories(JsonElement info)
+    {
+        if (!info.TryGetProperty("categories", out var array) ||
+            array.ValueKind != JsonValueKind.Array)
+        {
+            return Array.Empty<string>();
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var genres = new List<string>();
+        foreach (var element in array.EnumerateArray())
+        {
+            if (element.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            foreach (var part in (element.GetString() ?? string.Empty).Split('/'))
+            {
+                var name = part.Trim();
+                if (name.Length > 0 && name.Length <= MaxGenre && seen.Add(name))
+                {
+                    genres.Add(name);
+                }
+            }
+        }
+
+        return genres;
     }
 
     private static string? GetString(JsonElement element, string property) =>

@@ -8,7 +8,7 @@ public sealed record GoogleBookResult(
     string? Isbn,
     string? CoverImageUrl,
     string? Description,
-    string? Genre);
+    IReadOnlyList<string> Genres);
 
 public interface IGoogleBooksService
 {

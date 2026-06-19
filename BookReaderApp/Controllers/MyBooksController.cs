@@ -86,7 +86,7 @@ public class MyBooksController : Controller
             || Has(book.Author?.Name)
             || Has(book.Isbn)
             || Has(book.Description)
-            || Has(book.Genre?.Name);
+            || book.Genres.Any(g => Has(g.Name));
     }
 
     [HttpPost]

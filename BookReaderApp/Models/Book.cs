@@ -29,9 +29,9 @@ public class Book
     [StringLength(2000)]
     public string? Description { get; set; }
 
-    public int? GenreId { get; set; }
-
-    public Genre? Genre { get; set; }
+    // A book can belong to several distinct genres (e.g. science-fiction and fantasy).
+    // The join table's composite key keeps a genre from being assigned to the same book twice.
+    public ICollection<Genre> Genres { get; set; } = new List<Genre>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -296,6 +296,6 @@ public class BooksController : Controller
         Isbn = book.Isbn,
         CoverImageUrl = book.CoverImageUrl,
         Description = book.Description,
-        GenreValue = book.GenreId?.ToString()
+        GenreValues = book.Genres.Select(g => g.Id.ToString()).ToList()
     };
 }

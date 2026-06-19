@@ -37,6 +37,8 @@ public class BookFormViewModel : IValidatableObject
     [DataType(DataType.MultilineText)]
     public string? Description { get; set; }
 
-    [Display(Name = "Genre")]
-    public string? GenreValue { get; set; }
+    // Each entry is either an existing genre id or a free-typed genre name. A book may
+    // carry several distinct genres.
+    [Display(Name = "Genres")]
+    public List<string> GenreValues { get; set; } = new();
 }

@@ -53,6 +53,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // A book is identified by its ISBN; the same book can't be added twice.
             entity.HasIndex(b => b.Isbn).IsUnique();
+
+            // A book can carry several genres. EF builds an implicit BookGenre join table
+            // whose composite key stops the same genre being attached to a book twice.
+            entity.HasMany(b => b.Genres)
+                .WithMany(g => g.Books);
         });
 
         builder.Entity<Genre>(entity =>

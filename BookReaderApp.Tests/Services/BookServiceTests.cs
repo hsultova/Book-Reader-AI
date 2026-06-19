@@ -31,7 +31,7 @@ public class BookServiceTests
         Title = "Clean Code",
         AuthorValue = authorId.ToString(),
         Isbn = "978-0132350884",
-        GenreValue = "Software",
+        GenreValues = new() { "Software" },
         Description = "A handbook of agile software craftsmanship.",
         CoverImageUrl = "https://example.com/clean-code.jpg"
     };
@@ -206,13 +206,13 @@ public class BookServiceTests
 
         var edit = SampleForm(authorId);
         edit.Title = "Clean Code (Revised)";
-        edit.GenreValue = "Programming";
+        edit.GenreValues = new() { "Programming" };
         var result = await service.UpdateBookAsync(created.BookId!.Value, edit);
 
         Assert.True(result.Succeeded);
-        var stored = await context.Books.Include(b => b.Genre).SingleAsync();
+        var stored = await context.Books.Include(b => b.Genres).SingleAsync();
         Assert.Equal("Clean Code (Revised)", stored.Title);
-        Assert.Equal("Programming", stored.Genre!.Name);
+        Assert.Equal("Programming", stored.Genres.Single().Name);
     }
 
     [Fact]

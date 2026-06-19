@@ -95,9 +95,15 @@ else
                     }
                     <div class="card-body d-flex flex-column">
                         <h3 class="h6 card-title mb-1">@book.Title</h3>
-                        @if (!string.IsNullOrEmpty(book.Genre?.Name))
+                        @if (book.Genres.Any())
                         {
-                            <span class="badge bg-secondary align-self-start mb-2">@book.Genre.Name</span>
+                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                @foreach (var genre in book.Genres.OrderBy(g => g.Name))
+                                {
+                                    <a asp-controller="Genres" asp-action="Details" asp-route-id="@genre.Id"
+                                       class="badge bg-secondary text-decoration-none">@genre.Name</a>
+                                }
+                            </div>
                         }
                         <div class="mt-auto">
                             <a asp-controller="Books" asp-action="Details" asp-route-id="@book.Id"

@@ -16,7 +16,7 @@ public class AuthorRepository : EfRepository<Author>, IAuthorRepository
     public async Task<Author?> GetWithBooksAsync(int id) =>
         await Set
             .Include(a => a.Books)
-                .ThenInclude(b => b.Genre)
+                .ThenInclude(b => b.Genres)
             .FirstOrDefaultAsync(a => a.Id == id);
 
     public async Task<Author?> GetByNameAsync(string name)
