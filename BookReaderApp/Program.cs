@@ -110,6 +110,14 @@ builder.Services.Configure<GoogleBooksOptions>(
     builder.Configuration.GetSection(GoogleBooksOptions.SectionName));
 builder.Services.AddHttpClient<IGoogleBooksService, GoogleBooksService>();
 
+// AI recommendations (Gemini). Options bind the (backend-only) API key; the typed HttpClient
+// is the only path to Gemini — the key is attached server-side and never reaches the browser.
+// The engine is the only thing that talks to the API; AiRecommendationService orchestrates it.
+builder.Services.Configure<GeminiOptions>(
+    builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddHttpClient<IBookRecommendationEngine, GeminiBookRecommendationEngine>();
+builder.Services.AddScoped<IAiRecommendationService, AiRecommendationService>();
+
 // Antiforgery (CSRF) on every unsafe verb without annotating each action.
 builder.Services.AddControllersWithViews(options =>
 {
